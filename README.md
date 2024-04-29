@@ -1,3 +1,3 @@
-ФИО: Сивов Максим Дмитриевич
-email: pumpbro@gmail.com
+ФИО: Сивов Максим Дмитриевич \
+email: pumpbro@gmail.com \
 telegram: @smdoff
