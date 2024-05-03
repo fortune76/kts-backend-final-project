@@ -1,3 +1,4 @@
+import os
 import typing
 from dataclasses import dataclass
 
@@ -21,7 +22,6 @@ class AdminConfig:
 @dataclass
 class BotConfig:
     token: str
-    group_id: int
 
 
 @dataclass
@@ -49,13 +49,12 @@ def setup_config(app: "Application", config_path: str):
         # session=SessionConfig(
         #     key=raw_config["session"]["key"],
         # ),
-        # admin=AdminConfig(
-        #     email=raw_config["admin"]["email"],
-        #     password=raw_config["admin"]["password"],
-        # ),
-        # bot=BotConfig(
-        #     token=raw_config["bot"]["token"],
-        #     group_id=raw_config["bot"]["group_id"],
-        # ),
+        admin=AdminConfig(
+            email=raw_config["admin"]["email"],
+            password=raw_config["admin"]["password"],
+        ),
+        bot=BotConfig(
+            token=os.environ[f'{(raw_config["bot"]["token"])}'],
+        ),
         database=DatabaseConfig(**raw_config["database"]),
     )

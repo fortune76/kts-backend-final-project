@@ -4,6 +4,7 @@ from aiohttp.web import (
 
 from .config import setup_config
 from .routes import setup_routes
+from app.store.store import setup_store
 
 __all__ = ("Application",)
 
@@ -18,6 +19,7 @@ app = Application()
 
 
 def setup_app(config_path: str) -> Application:
-    setup_config(app)
+    setup_config(app, config_path)
     setup_routes(app)
+    setup_store(app)
     return app
