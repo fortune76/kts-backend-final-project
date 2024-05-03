@@ -2,13 +2,13 @@ import asyncio
 from logging.config import fileConfig
 
 from sqlalchemy import pool
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine import Connection, URL
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
 from app.store.database.sqlalchemy_database import BaseModel
-
+from app.web.app import app
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -42,7 +42,14 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = URL(
+        "postgresql+asyncpg",
+        username=app.config["database"]["username"],
+        password=app.config["database"]["password"],
+        host=app.config["database"]["host"],
+        port=app.config["database"]["port"],
+        database=app.config["database"]["name"],
+    )
     context.configure(
         url=url,
         target_metadata=target_metadata,

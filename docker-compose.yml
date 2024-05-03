@@ -1,10 +1,14 @@
 services:
   postgres:
+    build: 
+      context: ./
+      args:
+        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_DB=${POSTGRES_DB}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    env_file:
+      - .env
     image: postgres:16
-    environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "123"
-      POSTGRES_DB: "kts"
     ports:
       - 5432:5432
     restart: always
