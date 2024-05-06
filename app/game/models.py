@@ -1,9 +1,11 @@
 import datetime
-
 from dataclasses import dataclass
-from sqlalchemy.orm import Mapped, relationship, mapped_column
+
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
+
 from app.store.database.sqlalchemy_database import BaseModel
+
 
 @dataclass
 class Game:
@@ -54,7 +56,9 @@ class GameModel(BaseModel):
     last_turn: Mapped[str] = mapped_column(default=0)
     started_at: Mapped[str] = mapped_column(nullable=False)
     finist_at: Mapped[str] = mapped_column()
-    winner: Mapped[int] = mapped_column(ForeignKey("players.id", ondelete="CASCADE"), nullable=False)
+    winner: Mapped[int] = mapped_column(
+        ForeignKey("players.id", ondelete="CASCADE"), nullable=False
+    )
 
 
 class PlayerModel(BaseModel):
@@ -62,8 +66,12 @@ class PlayerModel(BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     balance: Mapped[int] = mapped_column()
     alive: Mapped[int] = mapped_column(default=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users,id", ondelete="CASCADE"), nullable=False)
-    game_id: Mapped[int] = mapped_column(ForeignKey("games.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users,id", ondelete="CASCADE"), nullable=False
+    )
+    game_id: Mapped[int] = mapped_column(
+        ForeignKey("games.id", ondelete="CASCADE"), nullable=False
+    )
 
 
 class ShareModel(BaseModel):
@@ -73,15 +81,23 @@ class ShareModel(BaseModel):
     start_price: Mapped[int] = mapped_column(default=0)
 
 
-class GameInventory(BaseModel):
+class GameInventoryModel(BaseModel):
     __tablename__ = "game_inventory"
-    share_id: Mapped[int] = mapped_column(ForeignKey("shares.id", ondelete="CASCADE"), nullable=False)
-    game_id: Mapped[int] = mapped_column(ForeignKey("games.id", ondelete="CASCADE"), nullable=False)
+    share_id: Mapped[int] = mapped_column(
+        ForeignKey("shares.id", ondelete="CASCADE"), nullable=False
+    )
+    game_id: Mapped[int] = mapped_column(
+        ForeignKey("games.id", ondelete="CASCADE"), nullable=False
+    )
     price: Mapped[int] = mapped_column(default=0)
 
 
-class PlayerInventory(BaseModel):
+class PlayerInventoryModel(BaseModel):
     __tablename__ = "player_inventory"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    share_id: Mapped[int] = mapped_column(ForeignKey("shares.id", ondelete="CASCADE"), nullable=False)
-    share_owner: Mapped[int] = mapped_column(ForeignKey("players.id", ondelete="CASCADE"), nullable=False)
+    share_id: Mapped[int] = mapped_column(
+        ForeignKey("shares.id", ondelete="CASCADE"), nullable=False
+    )
+    share_owner: Mapped[int] = mapped_column(
+        ForeignKey("players.id", ondelete="CASCADE"), nullable=False
+    )
