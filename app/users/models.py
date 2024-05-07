@@ -1,18 +1,6 @@
-from dataclasses import dataclass
-
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.store.database.sqlalchemy_database import BaseModel
-
-
-@dataclass
-class User:
-    id: int
-    telegram_id: int
-    nickname: str
-    first_name: str
-    is_admin: bool
-    password: str
 
 
 class UserModel(BaseModel):
