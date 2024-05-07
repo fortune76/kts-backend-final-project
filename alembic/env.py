@@ -1,20 +1,22 @@
 import asyncio
+import pathlib
+import yaml
 from logging.config import fileConfig
 
-from sqlalchemy import pool
+from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.engine import Connection, URL
-from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from app.store.database.sqlalchemy_database import BaseModel
-from app.web.app import app
+from app.store.database import BaseModel
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
+
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
@@ -29,6 +31,10 @@ target_metadata = BaseModel.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+config_path=pathlib.Path(__file__).resolve().parent.parent / "etc/config.yaml"
+
+with open(config_path, "r") as f:
+    raw_config = yaml.safe_load(f)
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -44,11 +50,12 @@ def run_migrations_offline() -> None:
     """
     url = URL(
         "postgresql+asyncpg",
-        username=app.config["database"]["username"],
-        password=app.config["database"]["password"],
-        host=app.config["database"]["host"],
-        port=app.config["database"]["port"],
-        database=app.config["database"]["name"],
+        username=raw_config["database"]["user"],
+        password=raw_config["database"]["password"],
+        host=raw_config["database"]["host"],
+        port=raw_config["database"]["port"],
+        database=raw_config["database"]["database"],
+        query={},
     )
     context.configure(
         url=url,
@@ -73,12 +80,16 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
-
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+    url = URL(
+        "postgresql+asyncpg",
+        username=raw_config["database"]["user"],
+        password=raw_config["database"]["password"],
+        host=raw_config["database"]["host"],
+        port=raw_config["database"]["port"],
+        database=raw_config["database"]["database"],
+        query={},
     )
+    connectable = AsyncEngine(create_engine(url))
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
@@ -88,7 +99,6 @@ async def run_async_migrations() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-
     asyncio.run(run_async_migrations())
 
 
