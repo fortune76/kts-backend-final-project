@@ -1,8 +1,8 @@
-"""add models to game and users
+"""create models for game and users
 
-Revision ID: 8ad0bb5915d6
+Revision ID: 05126ce743eb
 Revises: 08dcf8fafcc3
-Create Date: 2024-05-07 14:30:02.895243
+Create Date: 2024-05-07 16:25:21.500780
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8ad0bb5915d6'
+revision: str = '05126ce743eb'
 down_revision: Union[str, None] = '08dcf8fafcc3'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,10 +23,10 @@ def upgrade() -> None:
     op.create_table('games',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('chat_id', sa.Integer(), nullable=False),
-    sa.Column('is_active', sa.String(), nullable=False),
-    sa.Column('last_turn', sa.String(), nullable=False),
     sa.Column('started_at', sa.String(), nullable=False),
     sa.Column('finish_at', sa.String(), nullable=False),
+    sa.Column('is_active', sa.String(), nullable=False),
+    sa.Column('last_turn', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('shares',
@@ -56,9 +56,9 @@ def upgrade() -> None:
     op.create_table('players',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('balance', sa.Integer(), nullable=False),
-    sa.Column('alive', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('game_id', sa.Integer(), nullable=False),
+    sa.Column('alive', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['game_id'], ['games.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
