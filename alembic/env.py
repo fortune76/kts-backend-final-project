@@ -9,7 +9,7 @@ from sqlalchemy.engine import Connection, URL
 
 from alembic import context
 
-from app.store.database.sqlalchemy_database import BaseModel
+from app.store.database import BaseModel
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

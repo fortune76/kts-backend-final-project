@@ -33,9 +33,6 @@ class Poller:
             res = await self.store.telegram_api.poll(offset=offset, timeout=5)
             for item in res["result"]:
                 offset = item["update_id"] + 1
-                try:
-                    await self.store.telegram_api.send_message(
-                        item["message"]["chat"]["id"], item["message"]["text"]
-                    )
-                except KeyError:
-                    continue
+                await self.store.telegram_api.send_message(
+                    item["message"]["chat"]["id"], item["message"]["text"]
+                )

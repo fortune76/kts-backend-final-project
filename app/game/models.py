@@ -48,6 +48,19 @@ class PlayerInventory:
     share_owner: int
 
 
+class PlayerModel(BaseModel):
+    __tablename__ = "players"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    balance: Mapped[int] = mapped_column()
+    alive: Mapped[int] = mapped_column(default=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    game_id: Mapped[int] = mapped_column(
+        ForeignKey("games.id", ondelete="CASCADE"), nullable=False
+    )
+
+
 class GameModel(BaseModel):
     __tablename__ = "games"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -55,23 +68,7 @@ class GameModel(BaseModel):
     is_active: Mapped[str] = mapped_column(default=True)
     last_turn: Mapped[str] = mapped_column(default=0)
     started_at: Mapped[str] = mapped_column(nullable=False)
-    finist_at: Mapped[str] = mapped_column()
-    winner: Mapped[int] = mapped_column(
-        ForeignKey("players.id", ondelete="CASCADE"), nullable=False
-    )
-
-
-class PlayerModel(BaseModel):
-    __tablename__ = "players"
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    balance: Mapped[int] = mapped_column()
-    alive: Mapped[int] = mapped_column(default=True)
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users,id", ondelete="CASCADE"), nullable=False
-    )
-    game_id: Mapped[int] = mapped_column(
-        ForeignKey("games.id", ondelete="CASCADE"), nullable=False
-    )
+    finish_at: Mapped[str] = mapped_column()
 
 
 class ShareModel(BaseModel):
@@ -84,7 +81,7 @@ class ShareModel(BaseModel):
 class GameInventoryModel(BaseModel):
     __tablename__ = "game_inventory"
     share_id: Mapped[int] = mapped_column(
-        ForeignKey("shares.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("shares.id", ondelete="CASCADE"), nullable=False, primary_key=True
     )
     game_id: Mapped[int] = mapped_column(
         ForeignKey("games.id", ondelete="CASCADE"), nullable=False
