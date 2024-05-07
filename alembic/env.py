@@ -1,5 +1,5 @@
 import asyncio
-import os
+import pathlib
 import yaml
 from logging.config import fileConfig
 
@@ -31,12 +31,7 @@ target_metadata = BaseModel.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-config_path=os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                "..",
-                "etc",
-                "config.yaml",
-            )
+config_path=pathlib.Path(__file__).resolve().parent.parent / "etc/config.yaml"
 
 with open(config_path, "r") as f:
     raw_config = yaml.safe_load(f)
