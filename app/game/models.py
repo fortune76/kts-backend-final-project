@@ -81,7 +81,9 @@ class ShareModel(BaseModel):
 class GameInventoryModel(BaseModel):
     __tablename__ = "game_inventory"
     share_id: Mapped[int] = mapped_column(
-        ForeignKey("shares.id", ondelete="CASCADE"), nullable=False, primary_key=True
+        ForeignKey("shares.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
     )
     game_id: Mapped[int] = mapped_column(
         ForeignKey("games.id", ondelete="CASCADE"), nullable=False
