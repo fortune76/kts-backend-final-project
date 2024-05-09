@@ -13,6 +13,7 @@ class Request(AiohttpRequest):
     def app(self) -> Application:
         return super().app()
 
+
 class ViewMixin(AiohttpView):
     @property
     def request(self) -> Request:
@@ -29,6 +30,7 @@ class ViewMixin(AiohttpView):
     @property
     def data(self) -> dict:
         return self.request.get("data", {})
+
 
 class AdminOnlyMixin:
     # TODO: сделать авторизацию админа

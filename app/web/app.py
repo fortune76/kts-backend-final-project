@@ -11,6 +11,7 @@ __all__ = ("Application", "setup_app")
 
 from app.store.database.database import Database
 
+
 class Application(AiohttpApplication):
     config: Config | None = None
     store: Store | None = None
