@@ -3,8 +3,11 @@ web:
   host: 127.0.0.1
   port: 8000
 admin:
-  email: pumpbro@gmail.com
+  telegram_id: 123
+  nickname: smdoff
+  first_name: Maxim
   password: 123
+  is_admin: True
 sentry:
   dsn:
   env: dev

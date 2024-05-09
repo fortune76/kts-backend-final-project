@@ -1,4 +1,3 @@
-import os
 import typing
 from dataclasses import dataclass
 
@@ -15,8 +14,12 @@ class SessionConfig:
 
 @dataclass
 class AdminConfig:
-    email: str
+    telegram_id: int
     password: str
+    nickname: str
+    first_name: str
+    is_admin: bool
+    password: str | None
 
 
 @dataclass
@@ -50,11 +53,14 @@ def setup_config(app: "Application", config_path: str):
         #     key=raw_config["session"]["key"],
         # ),
         admin=AdminConfig(
-            email=raw_config["admin"]["email"],
-            password=raw_config["admin"]["password"],
+            telegram_id=raw_config["admin"]["telegram_id"],
+            password=str(raw_config["admin"]["password"]),
+            nickname=raw_config["admin"]["nickname"],
+            first_name=raw_config["admin"]["first_name"],
+            is_admin=raw_config["admin"]["is_admin"],
         ),
         bot=BotConfig(
-            token=os.environ[f'{(raw_config["bot"]["token"])}'],
+            token=raw_config["bot"]["token"],
         ),
         database=DatabaseConfig(**raw_config["database"]),
     )
