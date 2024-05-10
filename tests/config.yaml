@@ -1,4 +1,21 @@
 debug: true
-
-security:
-  token: token
+web:
+  host: 127.0.0.1
+  port: 8000
+admin:
+  telegram_id: 123
+  nickname: smdoff
+  first_name: Maxim
+  password: 123
+sentry:
+  dsn:
+  env: dev
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: 123
+  database: kts
+bot:
+  token: asdasd1241
+store: {}
