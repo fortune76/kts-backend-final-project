@@ -7,7 +7,6 @@ admin:
   nickname: smdoff
   first_name: Maxim
   password: 123
-  is_admin: True
 sentry:
   dsn:
   env: dev

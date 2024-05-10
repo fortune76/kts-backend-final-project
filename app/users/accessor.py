@@ -6,7 +6,7 @@ from app.web.app import Application
 if typing.TYPE_CHECKING:
     from app.web.app import Application
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 
 from app.base.base_accessor import BaseAccessor
 from app.users.models import UserModel
@@ -55,13 +55,23 @@ class UserAccessor(BaseAccessor):
     async def get_admin_by_telegram_id(
         self, telegram_id: int
     ) -> UserModel | None:
-        stmt = select(UserModel).where(UserModel.telegram_id == telegram_id)
+        stmt = select(UserModel).where(
+            and_(
+                UserModel.telegram_id == telegram_id,
+                UserModel.is_admin,
+            )
+        )
         async with self.app.database.session() as session:
             user = await session.scalar(stmt)
         return user if user else None
 
     async def is_admin(self, telegram_id: int) -> bool:
-        stmt = select(UserModel).where(UserModel.telegram_id == telegram_id)
+        stmt = select(UserModel).where(
+            and_(
+                UserModel.telegram_id == telegram_id,
+                UserModel.is_admin,
+            )
+        )
         async with self.app.database.session() as session:
             user = await session.scalar(stmt)
         return bool(user)

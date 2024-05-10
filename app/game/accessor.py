@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, delete, select, update
 
 from app.base.base_accessor import BaseAccessor
 from app.game.models import (
@@ -31,20 +31,24 @@ class GameAccessor(BaseAccessor):
             return await session.scalar(stmt)
 
     async def increase_game_turn(self, game_id: int) -> None:
-        stmt = select(GameModel).where(GameModel.id == game_id)
+        stmt = (
+            update(GameModel)
+            .where(GameModel.id == game_id)
+            .values(last_turn=GameModel.last_turn + 1)
+        )
         async with self.app.database.session() as session:
-            game = await session.scalar(stmt)
-            last_turn = game.last_turn + 1
-            game.last_turn = last_turn
+            await session.execute(stmt)
             await session.commit()
 
     async def finish_game(self, game_id: int) -> None:
         datetime_now = datetime.datetime.now()
-        stmt = select(GameModel).where(GameModel.id == game_id)
+        stmt = (
+            update(GameModel)
+            .where(GameModel.id == game_id)
+            .values(finish_at=datetime_now)
+        )
         async with self.app.database.session() as session:
-            game = await session.scalar(stmt)
-            game.finish_at = datetime_now
-            game.is_active = False
+            await session.execute(stmt)
             await session.commit()
 
     async def create_player(
@@ -66,9 +70,9 @@ class GameAccessor(BaseAccessor):
             return await session.scalar(stmt)
 
     async def get_player_balance(self, player_id: int) -> int:
-        stmt = select(PlayerModel).where(PlayerModel.id == player_id)
+        stmt = select(PlayerModel.balance).where(PlayerModel.id == player_id)
         async with self.app.database.session() as session:
-            return (await session.scalar(stmt)).balance
+            return await session.scalar(stmt)
 
     async def update_player_balance(
         self, player_id: int, value: int, mode: str
@@ -86,10 +90,13 @@ class GameAccessor(BaseAccessor):
             await session.commit()
 
     async def player_dead(self, player_id: int) -> None:
-        stmt = select(PlayerModel).where(PlayerModel.id == player_id)
+        stmt = (
+            update(PlayerModel)
+            .where(PlayerModel.id == player_id)
+            .values(alive=False)
+        )
         async with self.app.database.session() as session:
-            player = await session.scalar(stmt)
-            player.alive = False
+            await session.execute(stmt)
             await session.commit()
 
     async def create_share(self, name: str, start_price: int) -> ShareModel:
@@ -103,17 +110,19 @@ class GameAccessor(BaseAccessor):
         return share
 
     async def delete_share(self, share_id: int) -> None:
-        stmt = select(ShareModel).where(ShareModel.id == share_id)
+        stmt = delete(ShareModel).where(ShareModel.id == share_id)
         async with self.app.database.session() as session:
-            share = await session.scalar(stmt)
-            await session.delete(share)
+            await session.execute(stmt)
             await session.commit()
 
     async def update_start_share_price(self, share_id: int, price: int) -> None:
-        stmt = select(ShareModel).where(ShareModel.id == share_id)
+        stmt = (
+            update(ShareModel)
+            .where(ShareModel.id == share_id)
+            .values(start_price=price)
+        )
         async with self.app.database.session() as session:
-            share = await session.scalar(stmt)
-            share.start_price = price
+            await session.execute(stmt)
             await session.commit()
 
     async def get_game_inventory(
@@ -143,15 +152,18 @@ class GameAccessor(BaseAccessor):
     async def change_item_price(
         self, game_id, share_id, share_price: int
     ) -> None:
-        stmt = select(GameInventoryModel).where(
-            and_(
-                GameInventoryModel.share_id == share_id,
-                GameInventoryModel.game_id == game_id,
+        stmt = (
+            update(GameInventoryModel)
+            .where(
+                and_(
+                    GameInventoryModel.share_id == share_id,
+                    GameInventoryModel.game_id == game_id,
+                )
             )
+            .values(share_price=share_price)
         )
         async with self.app.database.session() as session:
-            game_inventory_item = await session.scalar(stmt)
-            game_inventory_item.share_price = share_price
+            await session.execute(stmt)
             await session.commit()
 
     async def get_player_inventory(
@@ -195,11 +207,10 @@ class GameAccessor(BaseAccessor):
         self, share_id: int, player_id: int
     ) -> None:
         async with self.app.database.session() as session:
-            stmt = select(PlayerInventoryModel).where(
+            stmt = delete(PlayerInventoryModel).where(
                 PlayerInventoryModel.share_id == share_id
             )
-            player_inventory_item = await session.scalar(stmt)
-            await session.delete(player_inventory_item)
+            await session.execute(stmt)
 
             stmt = select(PlayerModel).where(PlayerModel.id == player_id)
             player = await session.scalar(stmt)

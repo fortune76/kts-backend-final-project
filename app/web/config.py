@@ -18,7 +18,7 @@ class AdminConfig:
     password: str
     nickname: str
     first_name: str
-    is_admin: bool
+    is_admin: bool = False
     password: str | None
 
 
@@ -57,7 +57,6 @@ def setup_config(app: "Application", config_path: str):
             password=str(raw_config["admin"]["password"]),
             nickname=raw_config["admin"]["nickname"],
             first_name=raw_config["admin"]["first_name"],
-            is_admin=raw_config["admin"]["is_admin"],
         ),
         bot=BotConfig(
             token=raw_config["bot"]["token"],
