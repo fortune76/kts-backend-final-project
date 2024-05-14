@@ -37,6 +37,18 @@ class UserAccessor(BaseAccessor):
             await session.commit()
         return user
 
+    async def get_user_by_id(self, id: int) -> UserModel:
+        stmt = select(UserModel).where(UserModel.id == id)
+        async with self.app.database.session() as session:
+            user = await session.scalar(stmt)
+        return user if user else None
+
+    async def get_user_by_telegram_id(self, telegram_id: int) -> UserModel:
+        stmt = select(UserModel).where(UserModel.telegram_id == telegram_id)
+        async with self.app.database.session() as session:
+            user = await session.scalar(stmt)
+        return user if user else None
+
     async def create_admin(
         self, telegram_id: int, nickname: str, first_name: str, password: str
     ) -> UserModel:
