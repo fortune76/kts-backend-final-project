@@ -182,12 +182,12 @@ f'{(await self.store.user.get_user_by_id(player.user_id)).first_name} \
         game_item = await self.store.games.get_game_inventory_item_by_share_id(
             share_id=share_id
         )
-        if player.balance < game_item.price:
-            return
-        await self.store.games.add_share_to_player_inventory(
-            player_id=player.id,
-            share_id=share_id,
-        )
+        print(player.balance, game_item.price)
+        if player.balance >= game_item.price:
+            await self.store.games.add_share_to_player_inventory(
+                player_id=player.id,
+                share_id=share_id,
+            )
         game_id = player.game_id
         await self.send_edit_game_message(game_id, chat_id, message_id)
 

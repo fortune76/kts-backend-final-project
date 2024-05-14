@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import and_, delete, select, update
+from sqlalchemy import and_, delete, select, update, func
 
 from app.base.base_accessor import BaseAccessor
 from app.game.models import (
@@ -93,7 +93,7 @@ class GameAccessor(BaseAccessor):
     async def get_alive_players(self, game_id: int) -> list[PlayerModel]:
         stmt = select(PlayerModel).where(
             and_(PlayerModel.game_id == game_id, PlayerModel.alive == True)
-        )
+        ).order_by(PlayerModel.id)
         async with self.app.database.session() as session:
             return list(await session.scalars(stmt))
 
@@ -134,7 +134,7 @@ class GameAccessor(BaseAccessor):
 
     async def get_shares(self) -> list[ShareModel]:
         async with self.app.database.session() as session:
-            return list(await session.scalars(select(ShareModel)))
+            return list(await session.scalars(select(ShareModel).order_by(ShareModel.id)))
 
     async def get_share_by_id(self, share_id: int) -> ShareModel:
         async with self.app.database.session() as session:
@@ -166,7 +166,7 @@ class GameAccessor(BaseAccessor):
                 await session.scalars(
                     select(GameInventoryModel).where(
                         GameInventoryModel.game_id == game_id
-                    )
+                    ).order_by(GameInventoryModel.id)
                 )
             )
 
@@ -216,38 +216,31 @@ class GameAccessor(BaseAccessor):
                 await session.scalars(
                     select(PlayerInventoryModel).where(
                         PlayerInventoryModel.share_owner == player_id
-                    )
+                    ).order_by(PlayerInventoryModel.id)
                 )
             )
 
     async def get_count_of_items(self, share_id: int, player_id: int) -> int:
-        stmt = select(PlayerInventoryModel).where(
+        stmt = select(func.count(PlayerInventoryModel.share_id)).select_from(PlayerInventoryModel).where(
             and_(
                 PlayerInventoryModel.share_id == share_id,
                 PlayerInventoryModel.share_owner == player_id,
             )
         )
         async with self.app.database.session() as session:
-            result = list(await session.scalars(stmt))
-            return len(result)
+            return await session.scalar(stmt)
 
     async def get_player_shares(self, player_id: int) -> list[str]:
         stmt = (
-            select(ShareModel)
+            select(ShareModel).distinct()
             .join(
                 PlayerInventoryModel,
                 ShareModel.id == PlayerInventoryModel.share_id,
             )
             .where(PlayerInventoryModel.share_owner == player_id)
-        )
+        ).order_by(ShareModel.id)
         async with self.app.database.session() as session:
-            result = list(await session.scalars(stmt))
-            distinct_result = []
-            for share in result:
-                if share in distinct_result:
-                    continue
-                distinct_result.append(share)
-            return distinct_result
+            return list(await session.scalars(stmt))
 
     async def add_share_to_player_inventory(
         self, share_id: int, player_id: int
@@ -278,10 +271,14 @@ class GameAccessor(BaseAccessor):
         self, share_id: int, player_id: int
     ) -> None:
         async with self.app.database.session() as session:
-            stmt = delete(PlayerInventoryModel.id).where(
+            item_stmt = select(PlayerInventoryModel.id).where(
                 PlayerInventoryModel.share_id == share_id,
                 PlayerInventoryModel.share_owner == player_id,
             )
+            id_ = await session.scalar(item_stmt)
+            stmt = delete(PlayerInventoryModel).where(
+                PlayerInventoryModel.share_id == share_id,
+                PlayerInventoryModel.id == id_)
             await session.execute(stmt)
 
             stmt = select(PlayerModel).where(PlayerModel.id == player_id)
