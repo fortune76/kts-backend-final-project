@@ -278,13 +278,9 @@ class GameAccessor(BaseAccessor):
         self, share_id: int, player_id: int
     ) -> None:
         async with self.app.database.session() as session:
-            item_stmt = select(PlayerInventoryModel.id).where(
+            stmt = delete(PlayerInventoryModel.id).where(
                 PlayerInventoryModel.share_id == share_id,
                 PlayerInventoryModel.share_owner == player_id,
-            )
-            id_ = await session.scalar(item_stmt)
-            stmt = delete(PlayerInventoryModel).where(
-                PlayerInventoryModel.id == id_
             )
             await session.execute(stmt)
 

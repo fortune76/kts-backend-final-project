@@ -36,7 +36,6 @@ class Poller:
             res = await self.store.telegram_api.poll(offset=offset, timeout=5)
             for item in res["result"]:
                 offset = item["update_id"] + 1
-                # print(item)
                 if item.get("message"):
                     if item["message"].get("new_chat_participant"):
                         pass
@@ -50,30 +49,29 @@ class Poller:
                         item["poll"]["id"]
                     )
                 elif item.get("poll_answer"):
-                    if item["poll_answer"]["option_ids"][0] == 1:
-                        pass
-                    user = await self.bot.create_user(
-                        telegram_id=item["poll_answer"]["user"]["id"],
-                        nickname=item["poll_answer"]["user"]["username"],
-                        first_name=item["poll_answer"]["user"]["first_name"],
-                    )
-                    game_id = (
-                        await self.store.telegram_api.get_poll(
-                            poll_id=item["poll_answer"]["poll_id"],
+                    if item["poll_answer"]["option_ids"][0] == 0:
+                        user = await self.bot.create_user(
+                            telegram_id=item["poll_answer"]["user"]["id"],
+                            nickname=item["poll_answer"]["user"]["username"],
+                            first_name=item["poll_answer"]["user"]["first_name"],
                         )
-                    ).game_id
-                    if user:
-                        user_id = user.id
-                    else:
-                        user_id = (
-                            await self.store.user.get_user_by_telegram_id(
-                                item["poll_answer"]["user"]["id"]
+                        game_id = (
+                            await self.store.telegram_api.get_poll(
+                                poll_id=item["poll_answer"]["poll_id"],
                             )
-                        ).id
-                    await self.bot.create_player(
-                        user_id=user_id,
-                        game_id=game_id,
-                    )
+                        ).game_id
+                        if user:
+                            user_id = user.id
+                        else:
+                            user_id = (
+                                await self.store.user.get_user_by_telegram_id(
+                                    item["poll_answer"]["user"]["id"]
+                                )
+                            ).id
+                        await self.bot.create_player(
+                            user_id=user_id,
+                            game_id=game_id,
+                        )
                 elif item.get("edited_message"):
                     pass
                 else:

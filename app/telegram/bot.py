@@ -1,18 +1,10 @@
 import asyncio
 import random
-from enum import Enum
 
 from app.game.models import PlayerModel
 from app.store import Store
 
-
-class BotCommands(Enum):
-    start_bot = "Привет биржа"
-    create_game = "Кто будет играть?"
-    start_game = "Начать игру"
-    finish_game = "Завершить игру"
-    game_rules = "Правила игры"
-    bot_info = "О боте"
+from app.telegram.messages import BotCommands, TextMessage
 
 
 class Bot:
@@ -51,16 +43,14 @@ class Bot:
         players = await self.store.games.get_alive_players(game_id=game.id)
         if len(players) < 2:
             await self.store.games.finish_game(game_id=game.id)
-            message = """К сожалению игра не может быть начата. \
-Недостаточное количество игроков."""
             await self.store.telegram_api.send_message_with_keyboard(
                 chat_id=chat_id,
-                text=message,
+                text=TextMessage.players_count_not_enough.value,
             )
             return
         if not game or game.last_turn > 1:
             return
-        task = asyncio.create_task(self.task(game_id=game.id))
+        task = asyncio.create_task(self.game_turn_controller(game_id=game.id))
 
     async def create_player(self, user_id: int, game_id: int):
         await self.store.games.create_player(
@@ -97,52 +87,21 @@ class Bot:
         # winner = await self.store.games.get_winner(game_id=game_id)
 
     async def start_bot(self, chat_id: int):
-        message = f"""Привет, я игровой бот Биржа! 
-Для начала игры напишите в чат {BotCommands.create_game.value}
-После сбора игроков напишите в чат {BotCommands.start_bot.value}
-Для досрочного завершения игры напишите в чат {BotCommands.finish_game.value}
-Не знаете правила игры? Напишите в чат {BotCommands.game_rules.value}
-Если вы хотите узнать больше обо мне напишите {BotCommands.bot_info.value}.
-        """
         await self.store.telegram_api.send_message_with_keyboard(
             chat_id=chat_id,
-            text=message,
+            text=TextMessage.start_bot.value,
         )
 
     async def game_rules(self, chat_id: int):
-        message = """Правила игры: 
-Игра является простой версией биржы фондового рынка. \
-Игроки покупают и продают активы, цена которых постоянно меняется.
- 
-Игра длится 5 ходов. Время одного хода - 30 секунд. \
-В течение этого времени игроки могут продать и купить активы.
- 
-Цена на активы меняется случайным образом каждый ход. \
-Т.е. купив дорогие активы сейчас, на следующий ход вы можете 
-остаться ни с чем. 
-
-Игра заканчивается, когда в игре осталось меньше двух игроков \
-или закончились ходы. Побеждает игрок чей баланс, \
-включая стоимость активов в портфеле, наибольший.
-
-Счастливых вам биржевых игр и пусть удача всегда будет с вами!
-        """
-
         await self.store.telegram_api.send_message_with_keyboard(
             chat_id=chat_id,
-            text=message,
+            text=TextMessage.game_rules.value,
         )
 
     async def bot_info(self, chat_id: int):
-        message = """Игровой бот биржа был разработан в \
-качестве выпускного проекта курса от компании KTS.
-Разработчик - @smdoff, ментор - @ipakeev.
-Бот разработан на языке python, без использования специальных библиотек.
-        """
-
         await self.store.telegram_api.send_message_with_keyboard(
             chat_id=chat_id,
-            text=message,
+            text=TextMessage.bot_info.value,
         )
 
     async def create_user(
@@ -159,7 +118,7 @@ class Bot:
             first_name=first_name,
         )
 
-    async def task(self, game_id: int):
+    async def game_turn_controller(self, game_id: int):
         while True:
             game = await self.store.games.get_game_by_id(game_id=game_id)
             if not game.is_active:
