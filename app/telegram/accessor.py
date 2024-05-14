@@ -1,9 +1,12 @@
+import json
 import typing
 
 from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
+from sqlalchemy import select
 
 from app.base.base_accessor import BaseAccessor
+from app.telegram.models import PollModel
 from app.telegram.poller import Poller
 
 if typing.TYPE_CHECKING:
@@ -14,16 +17,12 @@ class TelegramAPIAccessor(BaseAccessor):
     def __init__(self, app: "Application", *args, **kwargs) -> None:
         super().__init__(app, *args, **kwargs)
         self.session: ClientSession | None = None
+        self.poller: Poller | None = None
         self.message: str | None = None
         self.tg_api: str = f"https://api.telegram.org/bot{app.config.bot.token}"
 
     async def connect(self, app: "Application"):
         self.session = ClientSession(connector=TCPConnector(verify_ssl=False))
-        # try:
-        #     await self.poll()
-        # except Exception as e:
-        #     self.logger.error("Exception", exc_info=e)
-
         self.poller = Poller(app.store)
         self.logger.info("start polling")
         self.poller.start()
@@ -61,6 +60,152 @@ class TelegramAPIAccessor(BaseAccessor):
             json={
                 "chat_id": chat_id,
                 "text": text,
+            },
+        ) as response:
+            return await response.json()
+
+    async def send_message_with_keyboard(self, chat_id: int, text: str):
+        kb = json.dumps(
+            {
+                "inline_keyboard": [
+                    [
+                        {
+                            "text": "Правила игры",
+                            "callback_data": "Правила игры",
+                        },
+                        {"text": "О боте", "callback_data": "О боте"},
+                    ]
+                ]
+            }
+        )
+        async with self.session.post(
+            self._build_query(host=self.tg_api, method="sendMessage"),
+            json={
+                "chat_id": chat_id,
+                "text": text,
+                "parse_mode": "Markdown",
+                "reply_markup": kb,
+            },
+        ) as response:
+            return await response.json()
+
+    async def send_answer_callback_query(self, callback_query_id: int):
+        async with self.session.post(
+            self._build_query(host=self.tg_api, method="answerCallbackQuery"),
+            json={
+                "callback_query_id": callback_query_id,
+            },
+        ) as response:
+            return await response.json()
+
+    async def send_start_poll(self, chat_id: int, game_id: int):
+        async with self.session.post(
+            self._build_query(host=self.tg_api, method="sendpoll"),
+            json={
+                "chat_id": chat_id,
+                "question": "Кто будет принимать участие в игре?",
+                "options": [
+                    {"text": "Буду"},
+                    {"text": "Не буду"},
+                ],
+                "is_anonymous": False,
+                "allows_multiple_answers": False,
+                "type": "regular",
+                "open_period": 60,
+            },
+        ) as response:
+            result = await response.json()
+            poll_id = result["result"]["poll"]["id"]
+            await self.create_poll(poll_id=poll_id, game_id=game_id)
+            return result
+
+    async def get_poll_results(self, poll_id: str):
+        async with self.session.post(
+            self._build_query(host=self.tg_api, method="pollanswer"),
+            json={
+                "poll_id": poll_id,
+            },
+        ) as response:
+            return await response.json()
+
+    async def create_poll(self, poll_id: str, game_id: int):
+        async with self.app.database.session() as session:
+            poll = PollModel(
+                poll_id=poll_id,
+                game_id=game_id,
+            )
+            session.add(poll)
+            await session.commit()
+        return poll
+
+    async def get_poll(self, poll_id: str):
+        async with self.app.database.session() as session:
+            stmt = select(PollModel).where(PollModel.poll_id == poll_id)
+            return await session.scalar(stmt)
+
+    async def send_game_message(
+        self, chat_id: int, game_inventory: list[list[str, int]], text: str
+    ):
+        kb = json.dumps(
+            {
+                "inline_keyboard": [
+                    [
+                        {
+                            "text": f"{item[0]} купить",
+                            "callback_data": f"купить {item[1]}",
+                        },
+                        {
+                            "text": f"{item[0]} продать",
+                            "callback_data": f"продать {item[1]}",
+                        },
+                    ]
+                    for item in game_inventory
+                ]
+            }
+        )
+        async with self.session.post(
+            self._build_query(host=self.tg_api, method="sendMessage"),
+            json={
+                "chat_id": chat_id,
+                "text": text,
+                "parse_mode": "Markdown",
+                "reply_markup": kb,
+            },
+        ) as response:
+            return await response.json()
+
+    async def edit_game_message(
+        self,
+        chat_id: int,
+        message_id: int,
+        game_inventory: list[list[str, int]],
+        text: str,
+    ):
+        kb = json.dumps(
+            {
+                "inline_keyboard": [
+                    [
+                        {
+                            "text": f"{item[0]} купить",
+                            "callback_data": f"купить {item[1]}",
+                        },
+                        {
+                            "text": f"{item[0]} продать",
+                            "callback_data": f"продать {item[1]}",
+                        },
+                    ]
+                    for item in game_inventory
+                ]
+            }
+        )
+        async with self.session.post(
+            self._build_query(host=self.tg_api, method="editMessageText"),
+            json={
+                "chat_id": chat_id,
+                "message_id": message_id,
+                "text": text,
+                "parse_mode": "Markdown",
+                "reply_markup": kb,
             },
         ) as response:
             return await response.json()

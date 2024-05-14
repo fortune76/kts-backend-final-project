@@ -3,7 +3,7 @@ web:
   host: 127.0.0.1
   port: 8000
 admin:
-  telegram_id: 123
+  telegram_id: 263266490
   nickname: smdoff
   first_name: Maxim
   password: 123
