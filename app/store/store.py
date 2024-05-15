@@ -11,11 +11,13 @@ class Store:
         from app.game.accessor import GameAccessor
         from app.telegram.accessor import TelegramAPIAccessor
         from app.users.accessor import UserAccessor
+        from app.game.game_settings_accessor import GameSettingsAccessor
 
         self.app = app
         self.user = UserAccessor(app)
         self.telegram_api = TelegramAPIAccessor(app)
         self.games = GameAccessor(app)
+        self.settings = GameSettingsAccessor(app)
 
 
 def setup_store(app: "Application"):
