@@ -14,8 +14,8 @@ database:
   host: localhost
   port: 5432
   user: postgres
-  password: DB_PASSWORD
+  password: 123
   database: kts
 bot:
-  token: BOT_TOKEN
+  token: 7196293044:AAGFDklxEz0ahKPhLHLTcvOG5JJQrnHG8cQ
 store: {}

@@ -7,6 +7,8 @@ class BotCommands(Enum):
     finish_game = "Завершить игру"
     game_rules = "Правила игры"
     bot_info = "О боте"
+    left_game = "Покинуть игру"
+
 class TextMessage(Enum):
     game_rules = """Правила игры: 
 Игра является простой версией биржы фондового рынка. \
@@ -39,3 +41,9 @@ class TextMessage(Enum):
         """
     players_count_not_enough = """К сожалению игра не может быть начата. \
 Недостаточное количество игроков."""
+
+class MessageType(Enum):
+    callback = "callback"
+    new_game_message = "new_game_message"
+    edit_game_message = "edit_game_message"
+    info = "info"

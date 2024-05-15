@@ -25,6 +25,11 @@ class GameAccessor(BaseAccessor):
             await session.commit()
         return game
 
+    async def get_all_active_games(self) -> list[GameModel]:
+        stmt = select(GameModel).where(GameModel.is_active == True)
+        async with self.app.database.session() as session:
+            return list(await session.scalars(stmt))
+
     async def get_game_by_id(self, game_id: int) -> GameModel:
         stmt = select(GameModel).where(GameModel.id == game_id)
         async with self.app.database.session() as session:
@@ -78,13 +83,13 @@ class GameAccessor(BaseAccessor):
 
     async def get_player_by_user_and_game_id(
         self, user_id: int, game_id: int
-    ) -> PlayerModel:
+    ) -> PlayerModel | None:
         stmt = select(PlayerModel).where(
             and_(PlayerModel.user_id == user_id, PlayerModel.game_id == game_id)
         )
         async with self.app.database.session() as session:
-            return await session.scalar(stmt)
-
+            player = await session.scalar(stmt)
+            return player if player else None
     async def get_player_balance(self, player_id: int) -> int:
         stmt = select(PlayerModel.balance).where(PlayerModel.id == player_id)
         async with self.app.database.session() as session:
@@ -171,10 +176,11 @@ class GameAccessor(BaseAccessor):
             )
 
     async def get_game_inventory_item_by_share_id(
-        self, share_id: int
+        self, share_id: int, game_id: int
     ) -> GameInventoryModel:
         stmt = select(GameInventoryModel).where(
-            GameInventoryModel.share_id == share_id
+            GameInventoryModel.share_id == share_id,
+            GameInventoryModel.game_id == game_id,
         )
         async with self.app.database.session() as session:
             return await session.scalar(stmt)

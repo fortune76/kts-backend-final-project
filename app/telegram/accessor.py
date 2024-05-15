@@ -54,41 +54,6 @@ class TelegramAPIAccessor(BaseAccessor):
             self.logger.info(data)
             return data
 
-    async def send_message(self, chat_id: int, text: str):
-        async with self.session.post(
-            self._build_query(host=self.tg_api, method="sendMessage"),
-            json={
-                "chat_id": chat_id,
-                "text": text,
-            },
-        ) as response:
-            return await response.json()
-
-    async def send_message_with_keyboard(self, chat_id: int, text: str):
-        kb = json.dumps(
-            {
-                "inline_keyboard": [
-                    [
-                        {
-                            "text": "Правила игры",
-                            "callback_data": "Правила игры",
-                        },
-                        {"text": "О боте", "callback_data": "О боте"},
-                    ]
-                ]
-            }
-        )
-        async with self.session.post(
-            self._build_query(host=self.tg_api, method="sendMessage"),
-            json={
-                "chat_id": chat_id,
-                "text": text,
-                "parse_mode": "Markdown",
-                "reply_markup": kb,
-            },
-        ) as response:
-            return await response.json()
-
     async def send_answer_callback_query(self, callback_query_id: int):
         async with self.session.post(
             self._build_query(host=self.tg_api, method="answerCallbackQuery"),
@@ -143,33 +108,37 @@ class TelegramAPIAccessor(BaseAccessor):
             stmt = select(PollModel).where(PollModel.poll_id == poll_id)
             return await session.scalar(stmt)
 
-    async def send_game_message(
-        self, chat_id: int, game_inventory: list[list[str, int]], text: str
-    ):
-        kb = json.dumps(
-            {
-                "inline_keyboard": [
-                    [
-                        {
-                            "text": f"{item[0]} купить",
-                            "callback_data": f"купить {item[1]}",
-                        },
-                        {
-                            "text": f"{item[0]} продать",
-                            "callback_data": f"продать {item[1]}",
-                        },
-                    ]
-                    for item in game_inventory
-                ]
-            }
-        )
+    async def send_message(self, chat_id: int, text: str):
+        async with self.session.post(
+                self._build_query(host=self.tg_api, method="sendMessage"),
+                json={
+                    "chat_id": chat_id,
+                    "text": text,
+                },
+        ) as response:
+            return await response.json()
+
+    async def send_info_message_to_chat(self, chat_id: int, text: str, keyboard):
+        async with self.session.post(
+                self._build_query(host=self.tg_api, method="sendMessage"),
+                json={
+                    "chat_id": chat_id,
+                    "text": text,
+                    "parse_mode": "Markdown",
+                    "reply_markup": keyboard,
+                },
+        ) as response:
+            return await response.json()
+
+    async def send_game_message(self, chat_id: int, text: str, keyboard):
+
         async with self.session.post(
             self._build_query(host=self.tg_api, method="sendMessage"),
             json={
                 "chat_id": chat_id,
                 "text": text,
                 "parse_mode": "Markdown",
-                "reply_markup": kb,
+                "reply_markup": keyboard,
             },
         ) as response:
             return await response.json()
@@ -178,26 +147,9 @@ class TelegramAPIAccessor(BaseAccessor):
         self,
         chat_id: int,
         message_id: int,
-        game_inventory: list[list[str, int]],
         text: str,
+        keyboard,
     ):
-        kb = json.dumps(
-            {
-                "inline_keyboard": [
-                    [
-                        {
-                            "text": f"{item[0]} купить",
-                            "callback_data": f"купить {item[1]}",
-                        },
-                        {
-                            "text": f"{item[0]} продать",
-                            "callback_data": f"продать {item[1]}",
-                        },
-                    ]
-                    for item in game_inventory
-                ]
-            }
-        )
         async with self.session.post(
             self._build_query(host=self.tg_api, method="editMessageText"),
             json={
@@ -205,7 +157,7 @@ class TelegramAPIAccessor(BaseAccessor):
                 "message_id": message_id,
                 "text": text,
                 "parse_mode": "Markdown",
-                "reply_markup": kb,
+                "reply_markup": keyboard,
             },
         ) as response:
             return await response.json()
