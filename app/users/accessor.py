@@ -43,7 +43,9 @@ class UserAccessor(BaseAccessor):
             user = await session.scalar(stmt)
         return user if user else None
 
-    async def get_user_by_telegram_id(self, telegram_id: int) -> UserModel | None:
+    async def get_user_by_telegram_id(
+        self, telegram_id: int
+    ) -> UserModel | None:
         stmt = select(UserModel).where(UserModel.telegram_id == telegram_id)
         async with self.app.database.session() as session:
             user = await session.scalar(stmt)

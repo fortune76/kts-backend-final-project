@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import and_, delete, select, update, func
+from sqlalchemy import and_, delete, func, select, update
 
 from app.base.base_accessor import BaseAccessor
 from app.game.models import (
@@ -24,6 +24,11 @@ class GameAccessor(BaseAccessor):
             session.add(game)
             await session.commit()
         return game
+
+    async def get_all_active_games(self) -> list[GameModel]:
+        stmt = select(GameModel).where(GameModel.is_active == True)
+        async with self.app.database.session() as session:
+            return list(await session.scalars(stmt))
 
     async def get_game_by_id(self, game_id: int) -> GameModel:
         stmt = select(GameModel).where(GameModel.id == game_id)
@@ -78,12 +83,13 @@ class GameAccessor(BaseAccessor):
 
     async def get_player_by_user_and_game_id(
         self, user_id: int, game_id: int
-    ) -> PlayerModel:
+    ) -> PlayerModel | None:
         stmt = select(PlayerModel).where(
             and_(PlayerModel.user_id == user_id, PlayerModel.game_id == game_id)
         )
         async with self.app.database.session() as session:
-            return await session.scalar(stmt)
+            player = await session.scalar(stmt)
+            return player if player else None
 
     async def get_player_balance(self, player_id: int) -> int:
         stmt = select(PlayerModel.balance).where(PlayerModel.id == player_id)
@@ -91,9 +97,13 @@ class GameAccessor(BaseAccessor):
             return await session.scalar(stmt)
 
     async def get_alive_players(self, game_id: int) -> list[PlayerModel]:
-        stmt = select(PlayerModel).where(
-            and_(PlayerModel.game_id == game_id, PlayerModel.alive == True)
-        ).order_by(PlayerModel.id)
+        stmt = (
+            select(PlayerModel)
+            .where(
+                and_(PlayerModel.game_id == game_id, PlayerModel.alive == True)
+            )
+            .order_by(PlayerModel.id)
+        )
         async with self.app.database.session() as session:
             return list(await session.scalars(stmt))
 
@@ -134,12 +144,22 @@ class GameAccessor(BaseAccessor):
 
     async def get_shares(self) -> list[ShareModel]:
         async with self.app.database.session() as session:
-            return list(await session.scalars(select(ShareModel).order_by(ShareModel.id)))
+            return list(
+                await session.scalars(
+                    select(ShareModel).order_by(ShareModel.id)
+                )
+            )
 
     async def get_share_by_id(self, share_id: int) -> ShareModel:
         async with self.app.database.session() as session:
             return await session.scalar(
                 select(ShareModel).where(ShareModel.id == share_id)
+            )
+
+    async def get_share_by_name(self, share_name: str):
+        async with self.app.database.session() as session:
+            return await session.scalar(
+                select(ShareModel).where(ShareModel.name == share_name)
             )
 
     async def delete_share(self, share_id: int) -> None:
@@ -164,17 +184,18 @@ class GameAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             return list(
                 await session.scalars(
-                    select(GameInventoryModel).where(
-                        GameInventoryModel.game_id == game_id
-                    ).order_by(GameInventoryModel.id)
+                    select(GameInventoryModel)
+                    .where(GameInventoryModel.game_id == game_id)
+                    .order_by(GameInventoryModel.id)
                 )
             )
 
     async def get_game_inventory_item_by_share_id(
-        self, share_id: int
+        self, share_id: int, game_id: int
     ) -> GameInventoryModel:
         stmt = select(GameInventoryModel).where(
-            GameInventoryModel.share_id == share_id
+            GameInventoryModel.share_id == share_id,
+            GameInventoryModel.game_id == game_id,
         )
         async with self.app.database.session() as session:
             return await session.scalar(stmt)
@@ -214,17 +235,21 @@ class GameAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             return list(
                 await session.scalars(
-                    select(PlayerInventoryModel).where(
-                        PlayerInventoryModel.share_owner == player_id
-                    ).order_by(PlayerInventoryModel.id)
+                    select(PlayerInventoryModel)
+                    .where(PlayerInventoryModel.share_owner == player_id)
+                    .order_by(PlayerInventoryModel.id)
                 )
             )
 
     async def get_count_of_items(self, share_id: int, player_id: int) -> int:
-        stmt = select(func.count(PlayerInventoryModel.share_id)).select_from(PlayerInventoryModel).where(
-            and_(
-                PlayerInventoryModel.share_id == share_id,
-                PlayerInventoryModel.share_owner == player_id,
+        stmt = (
+            select(func.count(PlayerInventoryModel.share_id))
+            .select_from(PlayerInventoryModel)
+            .where(
+                and_(
+                    PlayerInventoryModel.share_id == share_id,
+                    PlayerInventoryModel.share_owner == player_id,
+                )
             )
         )
         async with self.app.database.session() as session:
@@ -232,7 +257,8 @@ class GameAccessor(BaseAccessor):
 
     async def get_player_shares(self, player_id: int) -> list[str]:
         stmt = (
-            select(ShareModel).distinct()
+            select(ShareModel)
+            .distinct()
             .join(
                 PlayerInventoryModel,
                 ShareModel.id == PlayerInventoryModel.share_id,
@@ -278,7 +304,8 @@ class GameAccessor(BaseAccessor):
             id_ = await session.scalar(item_stmt)
             stmt = delete(PlayerInventoryModel).where(
                 PlayerInventoryModel.share_id == share_id,
-                PlayerInventoryModel.id == id_)
+                PlayerInventoryModel.id == id_,
+            )
             await session.execute(stmt)
 
             stmt = select(PlayerModel).where(PlayerModel.id == player_id)
