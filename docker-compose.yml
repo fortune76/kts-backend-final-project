@@ -1,14 +1,26 @@
 services:
   postgres:
-    build: 
-      context: ./
-      args:
-        - POSTGRES_USER=${POSTGRES_USER}
-        - POSTGRES_DB=${POSTGRES_DB}
-        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     env_file:
       - .env
     image: postgres:16
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - 5432:5432
     restart: always
+
+  backend:
+    restart: always
+    entrypoint: bash -c "python -m alembic upgrade head && python /usr/src/app/main.py"
+    build: ./
+    ports:
+      - 8080:8080
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+

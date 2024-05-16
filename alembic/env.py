@@ -1,4 +1,5 @@
 import asyncio
+import os
 import pathlib
 import yaml
 from logging.config import fileConfig
@@ -50,11 +51,11 @@ def run_migrations_offline() -> None:
     """
     url = URL(
         "postgresql+asyncpg",
-        username=raw_config["database"]["user"],
-        password=raw_config["database"]["password"],
-        host=raw_config["database"]["host"],
-        port=raw_config["database"]["port"],
-        database=raw_config["database"]["database"],
+        username=os.environ[raw_config["database"]["user"]],
+        password=os.environ[raw_config["database"]["password"]],
+        host=os.environ[raw_config["database"]["host"]],
+        port=int(os.environ[raw_config["database"]["port"]]),
+        database=os.environ[raw_config["database"]["database"]],
         query={},
     )
     context.configure(
@@ -82,11 +83,11 @@ async def run_async_migrations() -> None:
     """
     url = URL(
         "postgresql+asyncpg",
-        username=raw_config["database"]["user"],
-        password=raw_config["database"]["password"],
-        host=raw_config["database"]["host"],
-        port=raw_config["database"]["port"],
-        database=raw_config["database"]["database"],
+        username=os.environ[raw_config["database"]["user"]],
+        password=os.environ[raw_config["database"]["password"]],
+        host=os.environ[raw_config["database"]["host"]],
+        port=int(os.environ[raw_config["database"]["port"]]),
+        database=os.environ[raw_config["database"]["database"]],
         query={},
     )
     connectable = AsyncEngine(create_engine(url))

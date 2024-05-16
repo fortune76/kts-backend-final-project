@@ -1,3 +1,4 @@
+import os
 import typing
 from hashlib import sha256
 
@@ -15,13 +16,13 @@ from app.users.models import UserModel
 class UserAccessor(BaseAccessor):
     async def connect(self, app: "Application"):
         config_admin = self.app.config.admin
-        admin = await self.get_admin_by_telegram_id(config_admin.telegram_id)
+        admin = await self.get_admin_by_telegram_id(int(os.environ[config_admin.telegram_id]))
         if not admin:
             await self.create_admin(
-                telegram_id=config_admin.telegram_id,
-                nickname=config_admin.nickname,
-                first_name=config_admin.first_name,
-                password=config_admin.password,
+                telegram_id=int(os.environ[config_admin.telegram_id]),
+                nickname=os.environ[config_admin.nickname],
+                first_name=os.environ[config_admin.first_name],
+                password=os.environ[config_admin.password],
             )
 
     async def create_user(

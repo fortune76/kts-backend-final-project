@@ -1,3 +1,4 @@
+import os
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import URL
@@ -26,11 +27,11 @@ class Database:
         self.engine = create_async_engine(
             URL.create(
                 drivername="postgresql+asyncpg",
-                username=self.app.config.database.user,
-                password=self.app.config.database.password,
-                host=self.app.config.database.host,
-                database=self.app.config.database.database,
-                port=self.app.config.database.port,
+                username=os.environ[self.app.config.database.user],
+                password=os.environ[self.app.config.database.password],
+                host=os.environ[self.app.config.database.host],
+                database=os.environ[self.app.config.database.database],
+                port=int(os.environ[self.app.config.database.port]),
             ),
         )
         self.session = async_sessionmaker(
