@@ -14,7 +14,7 @@ class SessionConfig:
 
 @dataclass
 class AdminConfig:
-    telegram_id: int
+    telegram_id: str
     password: str
     nickname: str
     first_name: str
@@ -30,7 +30,7 @@ class BotConfig:
 @dataclass
 class DatabaseConfig:
     host: str
-    port: int
+    port: str
     user: str
     password: str
     database: str

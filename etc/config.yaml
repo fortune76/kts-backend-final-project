@@ -3,19 +3,19 @@ web:
   host: 127.0.0.1
   port: 8000
 admin:
-  telegram_id: 263266490
-  nickname: smdoff
-  first_name: Maxim
-  password: 123
+  telegram_id: BOT_ADMIN_ID
+  nickname: BOT_ADMIN_USERNAME
+  first_name: BOT_ADMIN_FIRST_NAME
+  password: BOT_ADMIN_PASSWORD
 sentry:
   dsn:
   env: dev
 database:
-  host: localhost
-  port: 5432
-  user: postgres
-  password: DB_PASSWORD
-  database: kts
+  host: POSTGRES_HOST
+  port: POSTGRES_PORT
+  user: POSTGRES_USER
+  password: POSTGRES_PASSWORD
+  database: POSTGRES_DB
 bot:
   token: BOT_TOKEN
 store: {}

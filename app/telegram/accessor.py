@@ -1,3 +1,4 @@
+import os
 import typing
 
 from aiohttp import TCPConnector
@@ -18,7 +19,7 @@ class TelegramAPIAccessor(BaseAccessor):
         self.session: ClientSession | None = None
         self.poller: Poller | None = None
         self.message: str | None = None
-        self.tg_api: str = f"https://api.telegram.org/bot{app.config.bot.token}"
+        self.tg_api: str = f"https://api.telegram.org/bot{os.environ[app.config.bot.token]}"
 
     async def connect(self, app: "Application"):
         self.session = ClientSession(connector=TCPConnector(verify_ssl=False))
