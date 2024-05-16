@@ -6,11 +6,9 @@ from app.game.models import GameSettingsModel
 
 class GameSettingsAccessor(BaseAccessor):
     async def get_turn_timer(self):
-        stmt = select(GameSettingsModel.turn_timer).where(
-            GameSettingsModel.id == 1
-        )
+        stmt = select(GameSettingsModel.turn_timer)
         async with self.app.database.session() as session:
-            return await session.scalar(stmt)
+            return (await session.execute(stmt)).one()
 
     async def update_turn_timer(self, turn_timer: int):
         stmt = (
@@ -23,11 +21,9 @@ class GameSettingsAccessor(BaseAccessor):
             await session.commit()
 
     async def get_turn_counter(self):
-        stmt = select(GameSettingsModel.turn_counter).where(
-            GameSettingsModel.id == 1
-        )
+        stmt = select(GameSettingsModel.turn_counter)
         async with self.app.database.session() as session:
-            return await session.scalar(stmt)
+            return (await session.execute(stmt)).one()
 
     async def update_turn_counter(self, turn_counter: int):
         stmt = (
@@ -40,11 +36,9 @@ class GameSettingsAccessor(BaseAccessor):
             await session.commit()
 
     async def get_player_balance(self):
-        stmt = select(GameSettingsModel.player_balance).where(
-            GameSettingsModel.id == 1
-        )
+        stmt = select(GameSettingsModel.player_balance)
         async with self.app.database.session() as session:
-            return await session.scalar(stmt)
+            return (await session.execute(stmt)).one()
 
     async def update_player_balance(self, player_balance: int):
         stmt = (
@@ -57,11 +51,9 @@ class GameSettingsAccessor(BaseAccessor):
             await session.commit()
 
     async def get_shares_minimal_price(self):
-        stmt = select(GameSettingsModel.shares_minimal_price).where(
-            GameSettingsModel.id == 1
-        )
+        stmt = select(GameSettingsModel.shares_minimal_price)
         async with self.app.database.session() as session:
-            return await session.scalar(stmt)
+            return (await session.execute(stmt)).one()
 
     async def update_shares_minimal_price(self, shares_minimal_price: int):
         stmt = (
@@ -74,11 +66,9 @@ class GameSettingsAccessor(BaseAccessor):
             await session.commit()
 
     async def get_shares_maximum_price(self):
-        stmt = select(GameSettingsModel.shares_maximum_price).where(
-            GameSettingsModel.id == 1
-        )
+        stmt = select(GameSettingsModel.shares_maximum_price)
         async with self.app.database.session() as session:
-            return await session.scalar(stmt)
+            return (await session.execute(stmt)).one()
 
     async def update_shares_maximum_price(self, shares_maximum_price: int):
         stmt = (
