@@ -9,9 +9,9 @@ if typing.TYPE_CHECKING:
 class Store:
     def __init__(self, app: "Application", *args, **kwargs):
         from app.game.accessor import GameAccessor
+        from app.game.game_settings_accessor import GameSettingsAccessor
         from app.telegram.accessor import TelegramAPIAccessor
         from app.users.accessor import UserAccessor
-        from app.game.game_settings_accessor import GameSettingsAccessor
 
         self.app = app
         self.user = UserAccessor(app)

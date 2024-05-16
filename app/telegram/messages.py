@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class BotCommands(Enum):
     start_bot = "Привет биржа"
     create_game = "Кто будет играть?"
@@ -8,6 +9,7 @@ class BotCommands(Enum):
     game_rules = "Правила игры"
     bot_info = "О боте"
     left_game = "Покинуть игру"
+
 
 class TextMessage(Enum):
     game_rules = """Правила игры: 
@@ -42,8 +44,17 @@ class TextMessage(Enum):
     players_count_not_enough = """К сожалению игра не может быть начата. \
 Недостаточное количество игроков."""
 
+
 class MessageType(Enum):
     callback = "callback"
     new_game_message = "new_game_message"
     edit_game_message = "edit_game_message"
     info = "info"
+
+
+class AdminCommands(Enum):
+    update_turn_counter = "turn_counter"
+    update_turn_timer = "turn_timer"
+    update_player_balance = "player_balance"
+    update_share_minimal_price = "share_minimal_price"
+    update_share_maximal_price = "share_maximum_price"

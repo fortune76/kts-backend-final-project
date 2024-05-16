@@ -26,7 +26,7 @@ class ShareModel(BaseModel):
     id: Mapped[int] = mapped_column(
         primary_key=True, autoincrement=True, init=False
     )
-    name: Mapped[str] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False, unique=True)
     start_price: Mapped[int] = mapped_column(default=0)
 
 
@@ -75,6 +75,7 @@ class PlayerInventoryModel(BaseModel):
     share_owner: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("players.id", ondelete="CASCADE"), nullable=False
     )
+
 
 class GameSettingsModel(BaseModel):
     __tablename__ = "game_settings"

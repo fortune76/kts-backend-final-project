@@ -35,7 +35,11 @@ class Poller:
     async def poll(self) -> None:
         offset = 0
         while self.is_running:
-            message = await self.store.telegram_api.poll(offset=offset, timeout=5)
+            message = await self.store.telegram_api.poll(
+                offset=offset, timeout=5
+            )
             for item in message["result"]:
-                await self.queue.put(asyncio.create_task(self.bot.parse_message(item)))
+                await self.queue.put(
+                    asyncio.create_task(self.bot.parse_message(item))
+                )
                 offset = item["update_id"] + 1

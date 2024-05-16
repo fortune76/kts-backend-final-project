@@ -1,4 +1,3 @@
-import json
 import typing
 
 from aiohttp import TCPConnector
@@ -108,30 +107,43 @@ class TelegramAPIAccessor(BaseAccessor):
             stmt = select(PollModel).where(PollModel.poll_id == poll_id)
             return await session.scalar(stmt)
 
-    async def send_message(self, chat_id: int, text: str):
+    async def send_admin_panel_message(self, chat_id: int, text: str, keyboard):
         async with self.session.post(
-                self._build_query(host=self.tg_api, method="sendMessage"),
-                json={
-                    "chat_id": chat_id,
-                    "text": text,
-                },
+            self._build_query(host=self.tg_api, method="sendMessage"),
+            json={
+                "chat_id": chat_id,
+                "text": text,
+                "parse_mode": "Markdown",
+                "reply_markup": keyboard,
+            },
         ) as response:
             return await response.json()
 
-    async def send_info_message_to_chat(self, chat_id: int, text: str, keyboard):
+    async def send_basic_message(self, chat_id: int, text: str):
         async with self.session.post(
-                self._build_query(host=self.tg_api, method="sendMessage"),
-                json={
-                    "chat_id": chat_id,
-                    "text": text,
-                    "parse_mode": "Markdown",
-                    "reply_markup": keyboard,
-                },
+            self._build_query(host=self.tg_api, method="sendMessage"),
+            json={
+                "chat_id": chat_id,
+                "text": text,
+            },
+        ) as response:
+            return await response.json()
+
+    async def send_info_message_to_chat(
+        self, chat_id: int, text: str, keyboard
+    ):
+        async with self.session.post(
+            self._build_query(host=self.tg_api, method="sendMessage"),
+            json={
+                "chat_id": chat_id,
+                "text": text,
+                "parse_mode": "Markdown",
+                "reply_markup": keyboard,
+            },
         ) as response:
             return await response.json()
 
     async def send_game_message(self, chat_id: int, text: str, keyboard):
-
         async with self.session.post(
             self._build_query(host=self.tg_api, method="sendMessage"),
             json={
