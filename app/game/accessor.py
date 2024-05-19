@@ -63,6 +63,18 @@ class GameAccessor(BaseAccessor):
             await session.execute(stmt)
             await session.commit()
 
+    async def get_all_finished_games(self) -> list[GameModel]:
+        stmt = select(GameModel).where(GameModel.is_active == False)
+        async with self.app.database.session() as session:
+            return list(await session.scalars(stmt))
+
+    async def get_last_chat_game(self, chat_id: int) -> GameModel:
+        stmt = select(GameModel).where(
+            GameModel.chat_id == chat_id,
+            GameModel.is_active == False).order_by(GameModel.finish_at).limit(1)
+        async with self.app.database.session() as session:
+            return await session.scalar(stmt)
+
     async def create_player(
         self, user_id: int, balance: int, game_id: int
     ) -> PlayerModel:
@@ -156,7 +168,7 @@ class GameAccessor(BaseAccessor):
                 select(ShareModel).where(ShareModel.id == share_id)
             )
 
-    async def get_share_by_name(self, share_name: str):
+    async def get_share_by_name(self, share_name: str) -> ShareModel:
         async with self.app.database.session() as session:
             return await session.scalar(
                 select(ShareModel).where(ShareModel.name == share_name)

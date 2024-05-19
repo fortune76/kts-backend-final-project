@@ -27,11 +27,11 @@ class Database:
         self.engine = create_async_engine(
             URL.create(
                 drivername="postgresql+asyncpg",
-                username=os.environ[self.app.config.database.user],
-                password=os.environ[self.app.config.database.password],
-                host=os.environ[self.app.config.database.host],
-                database=os.environ[self.app.config.database.database],
-                port=int(os.environ[self.app.config.database.port]),
+                username=os.getenv(self.app.config.database.user),
+                password=os.getenv(self.app.config.database.password),
+                host=os.getenv(self.app.config.database.host),
+                database=os.getenv(self.app.config.database.database),
+                port=int(os.getenv(self.app.config.database.port)),
             ),
         )
         self.session = async_sessionmaker(

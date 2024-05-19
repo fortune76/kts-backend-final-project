@@ -110,8 +110,9 @@ class Bot:
             )
 
     async def finish_game(
-        self, game_id: int | None = None, chat_id: int | None = None
+        self, user_id: int, game_id: int | None = None, chat_id: int | None = None,
     ):
+        user = await self.store.user.get_user(user_id=user_id)
         if game_id is None:
             game = await self.store.games.get_game_by_chat_id(chat_id=chat_id)
             if not game:
@@ -127,6 +128,10 @@ class Bot:
                 )
                 return
             game_id = game.id
+        player = await self.store.games.get_player_by_user_and_game_id(user_id=user.id, game_id=game_id)
+        # Game over protection
+        if not player:
+            return
         winner = await self.calculate_winner(game_id=game_id)
         user = await self.store.user.get_user_by_id(winner["winner"].user_id)
         message = f"Поздравляем победителя в нашей игре @{user.nickname}! Финальное состояние {winner['total_value']}."
@@ -510,7 +515,7 @@ f'{(await self.store.user.get_user_by_id(player.user_id)).first_name} \
         elif message == BotCommands.start_game.value:
             await self.start_game(chat_id=chat_id)
         elif message == BotCommands.finish_game.value:
-            await self.finish_game(chat_id=chat_id)
+            await self.finish_game(chat_id=chat_id, user_id=args[0])
         elif message == BotCommands.left_game.value:
             await self.player_left_the_game(
                 chat_id=chat_id, telegram_id=args[0]

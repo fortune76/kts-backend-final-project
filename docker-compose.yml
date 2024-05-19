@@ -13,7 +13,6 @@ services:
     restart: always
 
   backend:
-    restart: always
     entrypoint: bash -c "python -m alembic upgrade head && python /usr/src/app/main.py"
     build: ./
     ports:
@@ -23,4 +22,5 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    restart: always
 
