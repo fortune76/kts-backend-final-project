@@ -27,15 +27,16 @@ class Bot:
         self.admin_panel = AdminPanel(store)
 
     async def setup_settings(self):
-        self.turn_timer = await self.store.settings.get_turn_timer()
-        self.player_balance = await self.store.settings.get_player_balance()
-        self.turn_counter = await self.store.settings.get_turn_counter()
-        self.minimal_shares_price = (
-            await self.store.settings.get_shares_minimal_price()
-        )
-        self.maximum_shares_price = (
-            await self.store.settings.get_shares_maximum_price()
-        )
+        while True:
+            self.turn_timer = await self.store.settings.get_turn_timer()
+            self.player_balance = await self.store.settings.get_player_balance()
+            self.turn_counter = await self.store.settings.get_turn_counter()
+            self.minimal_shares_price = (
+                await self.store.settings.get_shares_minimal_price()
+            )
+            self.maximum_shares_price = (
+                await self.store.settings.get_shares_maximum_price()
+            )
 
     async def check_unfinished_games(self):
         games = await self.store.games.get_all_active_games()
@@ -110,9 +111,8 @@ class Bot:
             )
 
     async def finish_game(
-        self, user_id: int, game_id: int | None = None, chat_id: int | None = None,
+        self, user_id: int | None = None, game_id: int | None = None, chat_id: int | None = None,
     ):
-        user = await self.store.user.get_user(user_id=user_id)
         if game_id is None:
             game = await self.store.games.get_game_by_chat_id(chat_id=chat_id)
             if not game:
@@ -128,10 +128,12 @@ class Bot:
                 )
                 return
             game_id = game.id
-        player = await self.store.games.get_player_by_user_and_game_id(user_id=user.id, game_id=game_id)
+        if user_id:
+            user = await self.store.user.get_user_by_telegram_id(telegram_id=user_id)
+            player = await self.store.games.get_player_by_user_and_game_id(user_id=user.id, game_id=game_id)
         # Game over protection
-        if not player:
-            return
+            if not player:
+                return
         winner = await self.calculate_winner(game_id=game_id)
         user = await self.store.user.get_user_by_id(winner["winner"].user_id)
         message = f"Поздравляем победителя в нашей игре @{user.nickname}! Финальное состояние {winner['total_value']}."
@@ -217,10 +219,8 @@ class Bot:
             )
 
     async def create_user(
-        self, telegram_id: int, nickname: str | None, first_name: str
+        self, telegram_id: int, nickname: str, first_name: str
     ):
-        if not nickname:
-            nickname = first_name
         user = await self.store.user.get_user_by_telegram_id(
             telegram_id=telegram_id
         )
@@ -305,8 +305,9 @@ class Bot:
 {'\n'.join([f'{item[0]}, {item[2]}' for item in game_inventory])}
 Список игроков:
 {'\n'.join([
-f'{(await self.store.user.get_user_by_id(player.user_id)).first_name} \
-Баланс: {player.balance} Инвентарь: {' '.join([
+f'{(await self.store.user.get_user_by_id(player.user_id)).first_name}' \
+f'(@{(await self.store.user.get_user_by_id(player.user_id)).nickname})' \
+f'Баланс: {player.balance} Инвентарь: {' '.join([
                         f'{x[0]}({x[1]})' for x in players_info[player.id]
                     ])}'
             for player in alive_players])}
@@ -438,6 +439,8 @@ f'{(await self.store.user.get_user_by_id(player.user_id)).first_name} \
             await self.store.telegram_api.get_poll_results(item["poll"]["id"])
         elif item.get("poll_answer"):
             if item["poll_answer"]["option_ids"][0] == 0:
+                if not item["poll_answer"]["user"].get("username"):
+                   return
                 user = await self.create_user(
                     telegram_id=item["poll_answer"]["user"]["id"],
                     nickname=item["poll_answer"]["user"]["username"],

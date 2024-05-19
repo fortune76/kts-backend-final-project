@@ -4,7 +4,7 @@ from aiohttp_session import new_session
 
 from app.admin.schemes import UserListSchema, UserIdSchema, UserSchema, GameListSchema, GameSchema, GameChatIdSchema, \
     ShareSchema, ListShareSchema, ShareNameSchema, ListSettingsSchema, TurnTimerSchema, TurnCounterSchema, \
-    PlayerBalanceSchema, MinimalSharePriceSchema, MaximumSharePriceSchema, AdminSchema
+    PlayerBalanceSchema, MinimalSharePriceSchema, MaximumSharePriceSchema, AdminSchema, GameIdSchema
 from app.web.mixins import View, AuthRequiredMixin
 from app.web.utils import json_response
 
@@ -88,7 +88,7 @@ class GameDetailView(AuthRequiredMixin, View):
         summary="Game detail view",
         description="Information about a specific game"
     )
-    @querystring_schema(UserIdSchema)
+    @querystring_schema(GameIdSchema)
     @response_schema(GameSchema)
     async def get(self):
         try:

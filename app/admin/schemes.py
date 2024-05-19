@@ -23,7 +23,7 @@ class GameSchema(Schema):
     id = fields.Integer(required=True)
     chat_id = fields.Integer(required=True)
     started_at = fields.DateTime(required=True)
-    finished_at = fields.DateTime(required=True)
+    finish_at = fields.DateTime(required=True)
     is_active = fields.Boolean(required=True)
 
 class GameIdSchema(Schema):

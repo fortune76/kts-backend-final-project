@@ -40,6 +40,9 @@ class TextMessage(Enum):
 Для досрочного завершения игры напишите в чат {BotCommands.finish_game.value}
 Не знаете правила игры? Напишите в чат {BotCommands.game_rules.value}
 Если вы хотите узнать больше обо мне напишите {BotCommands.bot_info.value}.
+
+Внимание! Для игры нужно обязательно иметь username в telegram. \
+Бот не будет играть с пользователями без username.
         """
     players_count_not_enough = """К сожалению игра не может быть начата. \
 Недостаточное количество игроков."""

@@ -8,7 +8,7 @@ class GameSettingsAccessor(BaseAccessor):
     async def get_turn_timer(self):
         stmt = select(GameSettingsModel.turn_timer)
         async with self.app.database.session() as session:
-            return (await session.execute(stmt)).one()
+            return (await session.execute(stmt)).one()[0]
 
     async def update_turn_timer(self, turn_timer: int):
         stmt = (
@@ -21,9 +21,9 @@ class GameSettingsAccessor(BaseAccessor):
             await session.commit()
 
     async def get_turn_counter(self):
-        stmt = select(GameSettingsModel.turn_counter)
+        stmt = select(GameSettingsModel.turn_counter).limit(1)
         async with self.app.database.session() as session:
-            return (await session.execute(stmt)).one()
+            return (await session.execute(stmt)).one()[0]
 
     async def update_turn_counter(self, turn_counter: int):
         stmt = (
@@ -38,7 +38,7 @@ class GameSettingsAccessor(BaseAccessor):
     async def get_player_balance(self):
         stmt = select(GameSettingsModel.player_balance)
         async with self.app.database.session() as session:
-            return (await session.execute(stmt)).one()
+            return (await session.execute(stmt)).one()[0]
 
     async def update_player_balance(self, player_balance: int):
         stmt = (
@@ -53,7 +53,7 @@ class GameSettingsAccessor(BaseAccessor):
     async def get_shares_minimal_price(self):
         stmt = select(GameSettingsModel.shares_minimal_price)
         async with self.app.database.session() as session:
-            return (await session.execute(stmt)).one()
+            return (await session.execute(stmt)).one()[0]
 
     async def update_shares_minimal_price(self, shares_minimal_price: int):
         stmt = (
@@ -68,7 +68,7 @@ class GameSettingsAccessor(BaseAccessor):
     async def get_shares_maximum_price(self):
         stmt = select(GameSettingsModel.shares_maximum_price)
         async with self.app.database.session() as session:
-            return (await session.execute(stmt)).one()
+            return (await session.execute(stmt)).one()[0]
 
     async def update_shares_maximum_price(self, shares_maximum_price: int):
         stmt = (
