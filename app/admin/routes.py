@@ -5,20 +5,21 @@ if typing.TYPE_CHECKING:
 
 from app.admin.views import (
     AdminLoginView,
-    UserListView,
-    UserDetailView,
-    GameListView,
     GameDetailView,
+    GameListView,
     LastChatGameView,
-    ShareView,
-    ListShareView,
     ListSettingsView,
-    TurnTimerView,
-    TurnCounterView,
-    PlayerBalanceView,
-    MinimalSharePriceView,
+    ListShareView,
     MaximumSharePriceView,
+    MinimalSharePriceView,
+    PlayerBalanceView,
+    ShareView,
+    TurnCounterView,
+    TurnTimerView,
+    UserDetailView,
+    UserListView,
 )
+
 
 def setup_routes(app: "Application"):
     app.router.add_view("/admin/login", AdminLoginView)
@@ -33,5 +34,9 @@ def setup_routes(app: "Application"):
     app.router.add_view("/admin/settings/turn_timer", TurnTimerView)
     app.router.add_view("/admin/settings/turn_counter", TurnCounterView)
     app.router.add_view("/admin/settings/player_balance", PlayerBalanceView)
-    app.router.add_view("/admin/settings/minimal_share_price", MinimalSharePriceView)
-    app.router.add_view("/admin/settings/maximum_share_price", MaximumSharePriceView)
+    app.router.add_view(
+        "/admin/settings/minimal_share_price", MinimalSharePriceView
+    )
+    app.router.add_view(
+        "/admin/settings/maximum_share_price", MaximumSharePriceView
+    )

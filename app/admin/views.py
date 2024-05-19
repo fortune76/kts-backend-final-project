@@ -1,12 +1,34 @@
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPForbidden
-from aiohttp_apispec import docs, request_schema, response_schema, querystring_schema
+from aiohttp_apispec import (
+    docs,
+    querystring_schema,
+    request_schema,
+    response_schema,
+)
 from aiohttp_session import new_session
 
-from app.admin.schemes import UserListSchema, UserIdSchema, UserSchema, GameListSchema, GameSchema, GameChatIdSchema, \
-    ShareSchema, ListShareSchema, ShareNameSchema, ListSettingsSchema, TurnTimerSchema, TurnCounterSchema, \
-    PlayerBalanceSchema, MinimalSharePriceSchema, MaximumSharePriceSchema, AdminSchema, GameIdSchema
-from app.web.mixins import View, AuthRequiredMixin
+from app.admin.schemes import (
+    AdminSchema,
+    GameChatIdSchema,
+    GameIdSchema,
+    GameListSchema,
+    GameSchema,
+    ListSettingsSchema,
+    ListShareSchema,
+    MaximumSharePriceSchema,
+    MinimalSharePriceSchema,
+    PlayerBalanceSchema,
+    ShareNameSchema,
+    ShareSchema,
+    TurnCounterSchema,
+    TurnTimerSchema,
+    UserIdSchema,
+    UserListSchema,
+    UserSchema,
+)
+from app.web.mixins import AuthRequiredMixin, View
 from app.web.utils import json_response
+
 
 class AdminLoginView(View):
     @docs(
@@ -23,9 +45,7 @@ class AdminLoginView(View):
         except KeyError:
             raise HTTPBadRequest
 
-        is_admin = await self.store.user.is_admin(
-            telegram_id=telegram_id
-        )
+        is_admin = await self.store.user.is_admin(telegram_id=telegram_id)
         if not is_admin:
             raise HTTPForbidden
 
@@ -37,89 +57,93 @@ class AdminLoginView(View):
             raise HTTPForbidden
 
         app = self.request.app
-        admin = await app.store.user.get_admin_by_telegram_id(telegram_id=telegram_id)
+        admin = await app.store.user.get_admin_by_telegram_id(
+            telegram_id=telegram_id
+        )
         session = await new_session(request=self.request)
         raw_admin = AdminSchema().dump(admin)
         session["admin"] = raw_admin
         return json_response(data=AdminSchema().dump(admin))
 
+
 class UserListView(AuthRequiredMixin, View):
     @docs(
         tags=["users"],
         summary="List of all users",
-        description="List of all users who registered at bot"
+        description="List of all users who registered at bot",
     )
     @response_schema(UserListSchema)
     async def get(self):
         users = await self.store.user.get_users_list()
         return json_response(UserListSchema().dump({"users": users}))
 
+
 class UserDetailView(AuthRequiredMixin, View):
-    @docs(
-        tags=["users"],
-        summary="User details",
-        description="User details"
-    )
+    @docs(tags=["users"], summary="User details", description="User details")
     @querystring_schema(UserIdSchema)
     @response_schema(UserSchema)
     async def get(self):
         try:
-            user_id = int(self.request.query['id'])
+            user_id = int(self.request.query["id"])
         except KeyError:
             raise HTTPBadRequest
 
         user = await self.store.user.get_user_by_id(user_id)
         return json_response(UserSchema().dump(user))
 
+
 class GameListView(AuthRequiredMixin, View):
     @docs(
         tags=["games"],
         summary="List of all games",
-        description="List of all games that were played at bot"
+        description="List of all games that were played at bot",
     )
     @response_schema(GameListSchema)
     async def get(self):
         games = await self.store.games.get_all_finished_games()
         return json_response(GameListSchema().dump({"games": games}))
 
+
 class GameDetailView(AuthRequiredMixin, View):
     @docs(
         tags=["games"],
         summary="Game detail view",
-        description="Information about a specific game"
+        description="Information about a specific game",
     )
     @querystring_schema(GameIdSchema)
     @response_schema(GameSchema)
     async def get(self):
         try:
-            game_id = int(self.request.query['id'])
+            game_id = int(self.request.query["id"])
         except KeyError:
             raise HTTPBadRequest
 
         game = await self.store.games.get_game_by_id(game_id)
         return json_response(GameSchema().dump(game))
 
+
 class LastChatGameView(AuthRequiredMixin, View):
     @docs(
         tags=["games"],
         summary="Last chat game",
-        description="Get last chat game by chat id"
+        description="Get last chat game by chat id",
     )
     @querystring_schema(GameChatIdSchema)
     @response_schema(GameSchema)
     async def get(self):
         try:
-            chat_id = int(self.request.query['id'])
+            chat_id = int(self.request.query["id"])
         except KeyError:
             raise HTTPBadRequest
         game = await self.store.games.get_last_chat_game(chat_id)
         return json_response(GameSchema().dump(game))
 
+
 class ShareView(AuthRequiredMixin, View):
     @docs(
         tags=["settings"],
         summary="Add share",
-        description="Add share to game database"
+        description="Add share to game database",
     )
     @request_schema(ShareSchema)
     @response_schema(ShareSchema)
@@ -138,7 +162,7 @@ class ShareView(AuthRequiredMixin, View):
     @docs(
         tags=["settings"],
         summary="Delete share",
-        description="Delete share from game database"
+        description="Delete share from game database",
     )
     @querystring_schema(ShareNameSchema)
     async def delete(self):
@@ -164,11 +188,12 @@ class ListShareView(AuthRequiredMixin, View):
         shares = await self.store.games.get_shares()
         return json_response(ListShareSchema().dump({"shares": shares}))
 
+
 class TurnTimerView(AuthRequiredMixin, View):
     @docs(
         tags=["settings"],
         summary="Update turn timer",
-        description="Update turn timer if there are no active games"
+        description="Update turn timer if there are no active games",
     )
     @request_schema(TurnTimerSchema)
     @response_schema(TurnTimerSchema)
@@ -180,13 +205,19 @@ class TurnTimerView(AuthRequiredMixin, View):
 
         games = await self.store.games.get_all_active_games()
         if games:
-            return json_response({"message": "Не возможно изменить настройки. Есть активная игра"})
+            return json_response(
+                {
+                    "message": "Не возможно изменить настройки. Есть активная игра"
+                }
+            )
         return json_response(TurnTimerSchema().dump({"turn_timer": turn_timer}))
+
+
 class TurnCounterView(AuthRequiredMixin, View):
     @docs(
         tags=["settings"],
         summary="Update turn counter",
-        description="Update turn counter if there are no active games"
+        description="Update turn counter if there are no active games",
     )
     @request_schema(TurnCounterSchema)
     @response_schema(TurnCounterSchema)
@@ -198,14 +229,21 @@ class TurnCounterView(AuthRequiredMixin, View):
 
         games = await self.store.games.get_all_active_games()
         if games:
-            return json_response({"message": "Не возможно изменить настройки. Есть активная игра"})
-        return json_response(TurnCounterSchema().dump({"turn_counter": turn_counter}))
+            return json_response(
+                {
+                    "message": "Не возможно изменить настройки. Есть активная игра"
+                }
+            )
+        return json_response(
+            TurnCounterSchema().dump({"turn_counter": turn_counter})
+        )
+
 
 class PlayerBalanceView(AuthRequiredMixin, View):
     @docs(
         tags=["settings"],
         summary="Update player balance",
-        description="Update player balance if there are no active games"
+        description="Update player balance if there are no active games",
     )
     @request_schema(PlayerBalanceSchema)
     @response_schema(PlayerBalanceSchema)
@@ -217,14 +255,21 @@ class PlayerBalanceView(AuthRequiredMixin, View):
 
         games = await self.store.games.get_all_active_games()
         if games:
-            return json_response({"message": "Не возможно изменить настройки. Есть активная игра"})
-        return json_response(PlayerBalanceSchema().dump({"player_balance": player_balance}))
+            return json_response(
+                {
+                    "message": "Не возможно изменить настройки. Есть активная игра"
+                }
+            )
+        return json_response(
+            PlayerBalanceSchema().dump({"player_balance": player_balance})
+        )
+
 
 class MinimalSharePriceView(AuthRequiredMixin, View):
     @docs(
         tags=["settings"],
         summary="Update minimal share price",
-        description="Update minimal share price if there are no active games"
+        description="Update minimal share price if there are no active games",
     )
     @request_schema(MinimalSharePriceSchema)
     @response_schema(MinimalSharePriceSchema)
@@ -236,14 +281,23 @@ class MinimalSharePriceView(AuthRequiredMixin, View):
 
         games = await self.store.games.get_all_active_games()
         if games:
-            return json_response({"message": "Не возможно изменить настройки. Есть активная игра"})
-        return json_response(MinimalSharePriceSchema().dump({"minimal_share_price": minimal_share_price}))
+            return json_response(
+                {
+                    "message": "Не возможно изменить настройки. Есть активная игра"
+                }
+            )
+        return json_response(
+            MinimalSharePriceSchema().dump(
+                {"minimal_share_price": minimal_share_price}
+            )
+        )
+
 
 class MaximumSharePriceView(AuthRequiredMixin, View):
     @docs(
         tags=["settings"],
         summary="Update minimal share price",
-        description="Update minimal share price if there are no active games"
+        description="Update minimal share price if there are no active games",
     )
     @request_schema(MaximumSharePriceSchema)
     @response_schema(MaximumSharePriceSchema)
@@ -255,22 +309,35 @@ class MaximumSharePriceView(AuthRequiredMixin, View):
 
         games = await self.store.games.get_all_active_games()
         if games:
-            return json_response({"message": "Не возможно изменить настройки. Есть активная игра"})
-        return json_response(MaximumSharePriceSchema().dump({"maximum_share_price": maximum_share_price}))
+            return json_response(
+                {
+                    "message": "Не возможно изменить настройки. Есть активная игра"
+                }
+            )
+        return json_response(
+            MaximumSharePriceSchema().dump(
+                {"maximum_share_price": maximum_share_price}
+            )
+        )
+
 
 class ListSettingsView(AuthRequiredMixin, View):
     @docs(
         tags=["settings"],
         summary="List of game settings",
-        description="List of game settings"
+        description="List of game settings",
     )
     @response_schema(ListSettingsSchema)
     async def get(self):
         turn_timer = await self.store.settings.get_turn_timer()
         turn_counter = await self.store.settings.get_turn_counter()
         player_balance = await self.store.settings.get_player_balance()
-        minimal_share_price = await self.store.settings.get_shares_minimal_price()
-        maximum_share_price = await self.store.settings.get_shares_maximum_price()
+        minimal_share_price = (
+            await self.store.settings.get_shares_minimal_price()
+        )
+        maximum_share_price = (
+            await self.store.settings.get_shares_maximum_price()
+        )
         response = {
             "turn_timer": turn_timer,
             "turn_counter": turn_counter,
