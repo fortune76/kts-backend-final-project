@@ -10,8 +10,11 @@ from aiohttp_session import get_session
 
 from app.store import Store
 from app.store.database.database import Database
+
 if typing.TYPE_CHECKING:
     from app.web.app import Application
+
+
 class Request(AiohttpRequest):
     @property
     def app(self) -> "Application":
@@ -34,6 +37,7 @@ class View(AiohttpView):
     @property
     def data(self) -> dict:
         return self.request.get("data", {})
+
 
 class AuthRequiredMixin:
     async def _iter(self) -> StreamResponse:

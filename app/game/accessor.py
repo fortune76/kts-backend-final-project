@@ -69,9 +69,12 @@ class GameAccessor(BaseAccessor):
             return list(await session.scalars(stmt))
 
     async def get_last_chat_game(self, chat_id: int) -> GameModel:
-        stmt = select(GameModel).where(
-            GameModel.chat_id == chat_id,
-            GameModel.is_active == False).order_by(GameModel.finish_at).limit(1)
+        stmt = (
+            select(GameModel)
+            .where(GameModel.chat_id == chat_id, GameModel.is_active == False)
+            .order_by(GameModel.finish_at)
+            .limit(1)
+        )
         async with self.app.database.session() as session:
             return await session.scalar(stmt)
 

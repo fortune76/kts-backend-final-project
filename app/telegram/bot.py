@@ -111,7 +111,10 @@ class Bot:
             )
 
     async def finish_game(
-        self, user_id: int | None = None, game_id: int | None = None, chat_id: int | None = None,
+        self,
+        user_id: int | None = None,
+        game_id: int | None = None,
+        chat_id: int | None = None,
     ):
         if game_id is None:
             game = await self.store.games.get_game_by_chat_id(chat_id=chat_id)
@@ -129,9 +132,13 @@ class Bot:
                 return
             game_id = game.id
         if user_id:
-            user = await self.store.user.get_user_by_telegram_id(telegram_id=user_id)
-            player = await self.store.games.get_player_by_user_and_game_id(user_id=user.id, game_id=game_id)
-        # Game over protection
+            user = await self.store.user.get_user_by_telegram_id(
+                telegram_id=user_id
+            )
+            player = await self.store.games.get_player_by_user_and_game_id(
+                user_id=user.id, game_id=game_id
+            )
+            # Game over protection
             if not player:
                 return
         winner = await self.calculate_winner(game_id=game_id)
@@ -387,9 +394,7 @@ f'Баланс: {player.balance} Инвентарь: {' '.join([
                     text=await self.make_game_message(
                         game_id, formatted_game_inventory
                     ),
-                    keyboard=game_keyboard_generator(
-                        formatted_game_inventory
-                    ),
+                    keyboard=game_keyboard_generator(formatted_game_inventory),
                 )
             )
         )
@@ -440,7 +445,7 @@ f'Баланс: {player.balance} Инвентарь: {' '.join([
         elif item.get("poll_answer"):
             if item["poll_answer"]["option_ids"][0] == 0:
                 if not item["poll_answer"]["user"].get("username"):
-                   return
+                    return
                 user = await self.create_user(
                     telegram_id=item["poll_answer"]["user"]["id"],
                     nickname=item["poll_answer"]["user"]["username"],

@@ -16,7 +16,9 @@ from app.users.models import UserModel
 class UserAccessor(BaseAccessor):
     async def connect(self, app: "Application"):
         config_admin = self.app.config.admin
-        admin = await self.get_admin_by_telegram_id(int(os.getenv(config_admin.telegram_id)))
+        admin = await self.get_admin_by_telegram_id(
+            int(os.getenv(config_admin.telegram_id))
+        )
         if not admin:
             await self.create_admin(
                 telegram_id=int(os.getenv(config_admin.telegram_id)),
@@ -101,7 +103,6 @@ class UserAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             user = await session.scalar(stmt)
         return sha256(password.encode()).hexdigest() == user.password
-
 
     async def get_users_list(self) -> list[UserModel]:
         stmt = select(UserModel).order_by(UserModel.id)
