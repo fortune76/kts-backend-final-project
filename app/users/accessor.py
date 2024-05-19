@@ -16,13 +16,13 @@ from app.users.models import UserModel
 class UserAccessor(BaseAccessor):
     async def connect(self, app: "Application"):
         config_admin = self.app.config.admin
-        admin = await self.get_admin_by_telegram_id(int(os.environ[config_admin.telegram_id]))
+        admin = await self.get_admin_by_telegram_id(int(os.getenv(config_admin.telegram_id)))
         if not admin:
             await self.create_admin(
-                telegram_id=int(os.environ[config_admin.telegram_id]),
-                nickname=os.environ[config_admin.nickname],
-                first_name=os.environ[config_admin.first_name],
-                password=os.environ[config_admin.password],
+                telegram_id=int(os.getenv(config_admin.telegram_id)),
+                nickname=os.getenv(config_admin.nickname),
+                first_name=os.getenv(config_admin.first_name),
+                password=os.getenv(config_admin.password),
             )
 
     async def create_user(
@@ -90,3 +90,20 @@ class UserAccessor(BaseAccessor):
         async with self.app.database.session() as session:
             user = await session.scalar(stmt)
         return bool(user)
+
+    async def check_admin(self, telegram_id: int, password: str) -> bool:
+        stmt = select(UserModel).where(
+            and_(
+                UserModel.telegram_id == telegram_id,
+                UserModel.is_admin,
+            )
+        )
+        async with self.app.database.session() as session:
+            user = await session.scalar(stmt)
+        return sha256(password.encode()).hexdigest() == user.password
+
+
+    async def get_users_list(self) -> list[UserModel]:
+        stmt = select(UserModel).order_by(UserModel.id)
+        async with self.app.database.session() as session:
+            return list(await session.scalars(stmt))

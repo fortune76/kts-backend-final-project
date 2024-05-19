@@ -19,9 +19,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.execute('INSERT INTO game_settings VALUES (1, 30, 4, 500, 0, 500)')
-    op.execute("INSERT INTO shares VALUES (1, 'Gazprom', 200)")
-    op.execute("INSERT INTO shares VALUES (2, 'Sberbank', 250)")
+    op.execute('INSERT INTO game_settings (turn_timer, turn_counter, player_balance, shares_minimal_price, shares_maximum_price) VALUES (30, 4, 500, 0, 500)')
+    op.execute("INSERT INTO shares (name, start_price) VALUES ('Gazprom', 200)")
+    op.execute("INSERT INTO shares (name, start_price) VALUES ('Sberbank', 250)")
 
 
 def downgrade() -> None:
