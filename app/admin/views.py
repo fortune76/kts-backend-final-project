@@ -132,7 +132,7 @@ class LastChatGameView(AuthRequiredMixin, View):
     @response_schema(GameSchema)
     async def get(self):
         try:
-            chat_id = int(self.request.query["id"])
+            chat_id = int(self.request.query["chat_id"])
         except KeyError:
             raise HTTPBadRequest
         game = await self.store.games.get_last_chat_game(chat_id)
@@ -210,6 +210,7 @@ class TurnTimerView(AuthRequiredMixin, View):
                     "message": "Не возможно изменить настройки. Есть активная игра"
                 }
             )
+        await self.store.settings.update_turn_timer(turn_timer)
         return json_response(TurnTimerSchema().dump({"turn_timer": turn_timer}))
 
 
@@ -234,6 +235,7 @@ class TurnCounterView(AuthRequiredMixin, View):
                     "message": "Не возможно изменить настройки. Есть активная игра"
                 }
             )
+        await self.store.settings.update_turn_counter(turn_counter)
         return json_response(
             TurnCounterSchema().dump({"turn_counter": turn_counter})
         )
@@ -260,6 +262,7 @@ class PlayerBalanceView(AuthRequiredMixin, View):
                     "message": "Не возможно изменить настройки. Есть активная игра"
                 }
             )
+        await self.store.settings.update_player_balance(player_balance)
         return json_response(
             PlayerBalanceSchema().dump({"player_balance": player_balance})
         )
@@ -286,6 +289,7 @@ class MinimalSharePriceView(AuthRequiredMixin, View):
                     "message": "Не возможно изменить настройки. Есть активная игра"
                 }
             )
+        await self.store.settings.update_shares_minimal_price(minimal_share_price)
         return json_response(
             MinimalSharePriceSchema().dump(
                 {"minimal_share_price": minimal_share_price}
@@ -314,6 +318,7 @@ class MaximumSharePriceView(AuthRequiredMixin, View):
                     "message": "Не возможно изменить настройки. Есть активная игра"
                 }
             )
+        await self.store.settings.update_shares_maximum_price(maximum_share_price)
         return json_response(
             MaximumSharePriceSchema().dump(
                 {"maximum_share_price": maximum_share_price}

@@ -58,9 +58,9 @@ class Bot:
             return
         game = await self.store.games.create_game(chat_id)
         await self.store.games.increase_game_turn(game_id=game.id)
-        await self.store.telegram_api.send_start_poll(
+        await self.queue.put(asyncio.create_task(self.store.telegram_api.send_start_poll(
             chat_id=chat_id, game_id=game.id
-        )
+        )))
         shares = await self.store.games.get_shares()
         for share in shares:
             await self.store.games.add_share_to_inventory(
