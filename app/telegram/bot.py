@@ -1,6 +1,7 @@
 import asyncio
 import random
 from asyncio import Queue
+from typing import Any
 
 from app.game.models import PlayerModel
 from app.store import Store
@@ -25,6 +26,7 @@ class Bot:
         self.work = asyncio.create_task(self.worker())
         self.check_games = asyncio.create_task(self.check_unfinished_games())
         self.admin_panel = AdminPanel(store)
+        self.skip_players: dict[int, set] = {}
 
     async def setup_settings(self):
         while True:
@@ -41,6 +43,14 @@ class Bot:
     async def check_unfinished_games(self):
         games = await self.store.games.get_all_active_games()
         for game in games:
+            await self.queue.put(
+                asyncio.create_task(
+                    self.store.telegram_api.send_basic_message(
+                        chat_id=game.chat_id,
+                        text="Извините, возникли технические неполадки. Время хода обнулено!",
+                    )
+                )
+            )
             task = asyncio.create_task(
                 self.game_turn_controller(game_id=game.id)
             )
@@ -58,9 +68,13 @@ class Bot:
             return
         game = await self.store.games.create_game(chat_id)
         await self.store.games.increase_game_turn(game_id=game.id)
-        await self.queue.put(asyncio.create_task(self.store.telegram_api.send_start_poll(
-            chat_id=chat_id, game_id=game.id
-        )))
+        await self.queue.put(
+            asyncio.create_task(
+                self.store.telegram_api.send_start_poll(
+                    chat_id=chat_id, game_id=game.id
+                )
+            )
+        )
         shares = await self.store.games.get_shares()
         for share in shares:
             await self.store.games.add_share_to_inventory(
@@ -141,9 +155,13 @@ class Bot:
             # Game over protection
             if not player:
                 return
-        winner = await self.calculate_winner(game_id=game_id)
-        user = await self.store.user.get_user_by_id(winner["winner"].user_id)
-        message = f"Поздравляем победителя в нашей игре @{user.nickname}! Финальное состояние {winner['total_value']}."
+        winner, player_results = await self.calculate_results(game_id=game_id)
+        user = await self.store.user.get_user_by_id(winner["player"])
+        message = f"""Поздравляем победителя в нашей игре {user.first_name} (@{user.nickname})! Финальное состояние {winner['total_value']}.\n\
+Результаты остальных участников: \n\
+{'\n'.join([f'{(await self.store.user.get_user_by_id(obj[0])).first_name}\
+ (@{(await self.store.user.get_user_by_id(obj[0])).nickname}), Баланс: {obj[1]}' for obj in player_results.items()])}                   
+                   """
         await self.store.games.finish_game(game_id=game_id)
         chat_id = (await self.store.games.get_game_by_id(game_id)).chat_id
         await self.queue.put(
@@ -157,10 +175,11 @@ class Bot:
             )
         )
 
-    async def calculate_winner(
+    async def calculate_results(
         self, game_id: int
-    ) -> dict[str, [int, PlayerModel]]:
-        players = await self.store.games.get_alive_players(game_id=game_id)
+    ) -> tuple[dict[str, int | None | Any], dict[Any, Any]]:
+        result = {}
+        players = await self.store.games.get_all_players(game_id=game_id)
         maximum_value = 0
         winner = None
         for player in players:
@@ -175,13 +194,16 @@ class Bot:
                         game_id=game_id, share_id=share.share_id
                     )
                 ).price
+            result[player.user_id] = player_value
             if player_value > maximum_value:
                 maximum_value = player_value
                 winner = player
-        return {
-            "winner": winner,
+        del result[winner.user_id]
+        winner_result = {
+            "player": winner.user_id,
             "total_value": maximum_value,
         }
+        return winner_result, result
 
     async def start_bot(self, chat_id: int):
         game = await self.store.games.get_game_by_chat_id(chat_id=chat_id)
@@ -260,7 +282,8 @@ class Bot:
             )
             if not game.is_active:
                 break
-            if game.last_turn < self.turn_counter and players_count >= 2:
+            game_last_turn = game.last_turn
+            if game_last_turn < self.turn_counter + 1 and players_count >= 2:
                 game_inventory = await self.store.games.get_game_inventory(
                     game_id=game_id
                 )
@@ -296,8 +319,14 @@ class Bot:
                     )
                 )
                 await asyncio.sleep(self.turn_timer)
-                await self.change_shares_price(game_id=game_id)
-                await self.store.games.increase_game_turn(game_id=game_id)
+                game_after_sleep = await self.store.games.get_game_by_id(
+                    game_id=game_id
+                )
+                if game_last_turn == game_after_sleep.last_turn:
+                    await self.change_shares_price(game_id=game_id)
+                    await self.store.games.increase_game_turn(game_id=game_id)
+                else:
+                    break
             else:
                 await self.finish_game(game_id=game_id)
                 break
@@ -307,14 +336,15 @@ class Bot:
             game_id=game_id
         )
         players_info = await self.get_players_info(alive_players)
+        game = await self.store.games.get_game_by_id(game_id=game_id)
         return f"""
-Представляю вашему вниманию состояние фондового рынка на текущий ход:
+Представляю вашему вниманию состояние фондового рынка на текущий ход ({game.last_turn}):
 {'\n'.join([f'{item[0]}, {item[2]}' for item in game_inventory])}
 Список игроков:
 {'\n'.join([
-f'{(await self.store.user.get_user_by_id(player.user_id)).first_name}' \
-f'(@{(await self.store.user.get_user_by_id(player.user_id)).nickname})' \
-f'Баланс: {player.balance} Инвентарь: {' '.join([
+f'{(await self.store.user.get_user_by_id(player.user_id)).first_name} '
+f'(@{(await self.store.user.get_user_by_id(player.user_id)).nickname})'
+f' Баланс: {player.balance} Инвентарь: {' '.join([
                         f'{x[0]}({x[1]})' for x in players_info[player.id]
                     ])}'
             for player in alive_players])}
@@ -432,13 +462,13 @@ f'Баланс: {player.balance} Инвентарь: {' '.join([
                     )
                 )
                 return
-            if item["message"].get("new_chat_participant"):
-                pass
-            else:
+            if item["message"].get("text"):
                 await self.check_message(
                     item["message"]["chat"]["id"],
                     item["message"]["text"],
                 )
+            else:
+                pass
 
         elif item.get("poll"):
             await self.store.telegram_api.get_poll_results(item["poll"]["id"])
@@ -528,6 +558,32 @@ f'Баланс: {player.balance} Инвентарь: {' '.join([
             await self.player_left_the_game(
                 chat_id=chat_id, telegram_id=args[0]
             )
+        elif message == BotCommands.skip_turn.value:
+            game = await self.store.games.get_game_by_chat_id(chat_id=chat_id)
+            try:
+                self.skip_players[game.id].add(args[0])
+            except KeyError:
+                self.skip_players[game.id] = set()
+                self.skip_players[game.id].add(args[0])
+            alive_players = await self.store.games.get_alive_players(
+                game_id=game.id
+            )
+            if len(alive_players) == len(self.skip_players[game.id]):
+                await self.queue.put(
+                    asyncio.create_task(
+                        self.store.telegram_api.send_basic_message(
+                            chat_id=chat_id,
+                            text="Все игроки проголосовали за начало нового хода. Начинаю новый ход!",
+                        )
+                    )
+                )
+                self.skip_players[game.id].clear()
+                await self.change_shares_price(game_id=game.id)
+                await self.store.games.increase_game_turn(game_id=game.id)
+                await self.queue.put(
+                    asyncio.create_task(self.game_turn_controller(game.id))
+                )
+
         elif complex_callback_message[0] == "купить":
             await self.player_buys(
                 user_id=args[0],

@@ -9,6 +9,7 @@ class BotCommands(Enum):
     game_rules = "Правила игры"
     bot_info = "О боте"
     left_game = "Покинуть игру"
+    skip_turn = "Пропустить ход"
 
 
 class TextMessage(Enum):

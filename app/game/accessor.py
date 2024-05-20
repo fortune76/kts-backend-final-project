@@ -64,7 +64,11 @@ class GameAccessor(BaseAccessor):
             await session.commit()
 
     async def get_all_finished_games(self) -> list[GameModel]:
-        stmt = select(GameModel).where(GameModel.is_active == False)
+        stmt = (
+            select(GameModel)
+            .where(GameModel.is_active == False)
+            .order_by(GameModel.id)
+        )
         async with self.app.database.session() as session:
             return list(await session.scalars(stmt))
 
@@ -117,6 +121,15 @@ class GameAccessor(BaseAccessor):
             .where(
                 and_(PlayerModel.game_id == game_id, PlayerModel.alive == True)
             )
+            .order_by(PlayerModel.id)
+        )
+        async with self.app.database.session() as session:
+            return list(await session.scalars(stmt))
+
+    async def get_all_players(self, game_id: int) -> list[PlayerModel]:
+        stmt = (
+            select(PlayerModel)
+            .where(and_(PlayerModel.game_id == game_id))
             .order_by(PlayerModel.id)
         )
         async with self.app.database.session() as session:
