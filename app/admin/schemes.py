@@ -6,6 +6,10 @@ class AdminSchema(Schema):
     password = fields.Str(required=True)
 
 
+class AdminResponseSchema(Schema):
+    telegram_id = fields.Integer(required=True)
+
+
 class UserSchema(Schema):
     id = fields.Integer(required=True)
     telegram_id = fields.Integer(required=True)

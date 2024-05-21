@@ -8,6 +8,7 @@ from aiohttp_apispec import (
 from aiohttp_session import new_session
 
 from app.admin.schemes import (
+    AdminResponseSchema,
     AdminSchema,
     GameChatIdSchema,
     GameIdSchema,
@@ -37,7 +38,7 @@ class AdminLoginView(View):
         description="Login admin to server",
     )
     @request_schema(AdminSchema)
-    @response_schema(AdminSchema, 200)
+    @response_schema(AdminResponseSchema, 200)
     async def post(self):
         try:
             telegram_id = self.request["data"]["telegram_id"]
@@ -63,7 +64,7 @@ class AdminLoginView(View):
         session = await new_session(request=self.request)
         raw_admin = AdminSchema().dump(admin)
         session["admin"] = raw_admin
-        return json_response(data=AdminSchema().dump(admin))
+        return json_response(data=AdminResponseSchema().dump(admin))
 
 
 class UserListView(AuthRequiredMixin, View):
@@ -289,7 +290,9 @@ class MinimalSharePriceView(AuthRequiredMixin, View):
                     "message": "Не возможно изменить настройки. Есть активная игра"
                 }
             )
-        await self.store.settings.update_shares_minimal_price(minimal_share_price)
+        await self.store.settings.update_shares_minimal_price(
+            minimal_share_price
+        )
         return json_response(
             MinimalSharePriceSchema().dump(
                 {"minimal_share_price": minimal_share_price}
@@ -318,7 +321,9 @@ class MaximumSharePriceView(AuthRequiredMixin, View):
                     "message": "Не возможно изменить настройки. Есть активная игра"
                 }
             )
-        await self.store.settings.update_shares_maximum_price(maximum_share_price)
+        await self.store.settings.update_shares_maximum_price(
+            maximum_share_price
+        )
         return json_response(
             MaximumSharePriceSchema().dump(
                 {"maximum_share_price": maximum_share_price}

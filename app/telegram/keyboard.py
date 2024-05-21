@@ -28,6 +28,12 @@ def game_keyboard_generator(data: list) -> str:
                 "callback_data": "Завершить игру",
             },
         ],
+        [
+            {
+                "text": "Пропустить ход",
+                "callback_data": "Пропустить ход",
+            }
+        ],
     ]
     buttons = shares_buttons + option_buttons
     return json.dumps(
